@@ -172,7 +172,7 @@ namespace LWJ.Unity.Editor
             Buld();
         }
 
-        [UnityEditor.Callbacks.DidReloadScripts]
+        [DidReloadScripts]
         static void OnReloadScripts()
         {
             if (!EditorPrefs.GetBool(typeof(OneBuild).Name + ".startedbuild"))
