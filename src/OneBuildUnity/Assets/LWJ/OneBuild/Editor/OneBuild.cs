@@ -35,7 +35,17 @@ namespace LWJ.Unity.Editor
             }
             LoadConfig(version);
         }
-
+        public static void LoadConfigDebug()
+        {
+            string currentPath = VersionPath;
+            string version = "";
+            if (File.Exists(currentPath))
+            {
+                version = File.ReadAllText(currentPath);
+            }
+            version += ",debug";
+            LoadConfig(version);
+        }
         public static void LoadConfig(string version)
         {
             configs = new Dictionary<string, string>();
@@ -48,7 +58,7 @@ namespace LWJ.Unity.Editor
                 {
                     if (!string.IsNullOrEmpty(part))
                     {
-                        matchs.Add(part.Trim().ToLower(), 10);
+                        matchs[part.Trim().ToLower()] = 10;
                     }
                 }
             }
@@ -105,71 +115,146 @@ namespace LWJ.Unity.Editor
 
         }
 
-
-        [MenuItem("LWJ/One Build")]
+        [MenuItem("LWJ/OneBuild/Build")]
         public static void Build()
         {
-            LoadConfig();
+            SetConfig();
+            //start build
+            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
 
+            Buld();
+        }
+        static object ParseEnum(Type enumType, string str)
+        {
+            if (!enumType.IsEnum)
+                throw new Exception("Not Enum Type: " + enumType.FullName);
+            if (enumType.IsDefined(typeof(FlagsAttribute), true))
+            {
+                //uint n = 0;
+                //Debug.Log(typeof(uint).IsAssignableFrom(enumType));
+                //Debug.Log(enumType.IsAssignableFrom(typeof(uint)));
+                //Debug.Log(enumType.IsSubclassOf(typeof(uint)));
+                //Debug.Log(typeof(uint).IsSubclassOf(enumType));
+                //foreach (var part in str.Split(','))
+                //{
+                //    if (string.IsNullOrEmpty(part))
+                //        continue;
+                //    n |= (uint)Enum.Parse(enumType, part);
+                //}
+                //return Convert.ChangeType(n, enumType);
+                return Enum.Parse(enumType, str.Replace(' ', ','));
+            }
+            else
+            {
+                return Enum.Parse(enumType, str);
+            }
+        }
+        [MenuItem("LWJ/OneBuild/Build (Debug)")]
+        public static void BuildDebug()
+        {
 
+            LoadConfigDebug();
+            SetConfig(false);
+            //start build
+            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
+
+            Buld();
+        }
+        [MenuItem("LWJ/OneBuild/Update Config")]
+        public static void SetConfig()
+        {
+            SetConfig(true);
+        }
+        [MenuItem("LWJ/OneBuild/ Update Config (Debug)")]
+        public static void SetConfigDebug()
+        {
+            LoadConfigDebug();
+            SetConfig(false);
+        }
+        public static void SetConfig(bool loadConfig)
+        {
+            if (loadConfig)
+                LoadConfig();
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-
-            PlayerSettings.companyName = Get("CompanyName", "");
-            PlayerSettings.productName = Get("ProductName", "");
-            PlayerSettings.applicationIdentifier = Get("ApplicationIdentifier", "");
+            if (Contains("CompanyName"))
+                PlayerSettings.companyName = Get("CompanyName");
+            if (Contains("ProductName"))
+                PlayerSettings.productName = Get("ProductName");
+            if (Contains("ApplicationIdentifier"))
+                PlayerSettings.applicationIdentifier = Get("ApplicationIdentifier");
             if (buildGroup == BuildTargetGroup.Android || buildGroup == BuildTargetGroup.iOS)
             {
-                PlayerSettings.bundleVersion = Get("Version", "");
+                if (Contains("Version"))
+                    PlayerSettings.bundleVersion = Get("Version");
             }
-
-            PlayerSettings.SetApiCompatibilityLevel(buildGroup, Get("ApiCompatibilityLevel", ApiCompatibilityLevel.NET_2_0_Subset));
-
-
-            if (Contains("Android.KeystoreName"))
-                PlayerSettings.Android.keystoreName = Get("Android.KeystoreName");
-            if (Contains("Android.KeystorePass"))
-                PlayerSettings.Android.keystorePass = Get("Android.KeystorePass");
-            if (Contains("Android.KeyaliasName"))
-                PlayerSettings.Android.keyaliasName = Get("Android.KeyaliasName");
-            if (Contains("Android.KeyaliasPass"))
-                PlayerSettings.Android.keyaliasPass = Get("Android.KeyaliasPass");
+            if (Contains("ApiCompatibilityLevel"))
+                PlayerSettings.SetApiCompatibilityLevel(buildGroup, Get<ApiCompatibilityLevel>("ApiCompatibilityLevel"));
 
 
-            PlayerSettings.SetScriptingBackend(buildGroup, Get("ScriptingBackend", ScriptingImplementation.Mono2x));
 
-            PlayerSettings.SetArchitecture(buildGroup, (int)Get("Architecture", Architecture.Universal));
-            PlayerSettings.stripEngineCode = Get("StripEngineCode", true);
-            PlayerSettings.strippingLevel = Get("StrippingLevel", StrippingLevel.Disabled);
+            if (Contains("ScriptingBackend"))
+                PlayerSettings.SetScriptingBackend(buildGroup, Get<ScriptingImplementation>("ScriptingBackend"));
 
-            PlayerSettings.SetStackTraceLogType(LogType.Error, Get("LoggingError", StackTraceLogType.ScriptOnly));
-            PlayerSettings.SetStackTraceLogType(LogType.Assert, Get("LoggingAssert", StackTraceLogType.ScriptOnly));
-            PlayerSettings.SetStackTraceLogType(LogType.Warning, Get("LoggingWarning", StackTraceLogType.ScriptOnly));
-            PlayerSettings.SetStackTraceLogType(LogType.Log, Get("LoggingLog", StackTraceLogType.ScriptOnly));
-            PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("LoggingException", StackTraceLogType.ScriptOnly));
+            if (Contains("Architecture"))
+                PlayerSettings.SetArchitecture(buildGroup, (int)Get<Architecture>("Architecture"));
+            if (Contains("StripEngineCode"))
+                PlayerSettings.stripEngineCode = Get("StripEngineCode", true);
+            if (Contains("StrippingLevel"))
+                PlayerSettings.strippingLevel = Get("StrippingLevel", StrippingLevel.Disabled);
+
+            if (Contains("Il2CppCompilerConfiguration"))
+                PlayerSettings.SetIl2CppCompilerConfiguration(buildGroup, Get<Il2CppCompilerConfiguration>("Il2CppCompilerConfiguration"));
+
+
+            if (Contains("LoggingError"))
+                PlayerSettings.SetStackTraceLogType(LogType.Error, Get("LoggingError", StackTraceLogType.ScriptOnly));
+            if (Contains("LoggingAssert"))
+                PlayerSettings.SetStackTraceLogType(LogType.Assert, Get("LoggingAssert", StackTraceLogType.ScriptOnly));
+            if (Contains("LoggingWarning"))
+                PlayerSettings.SetStackTraceLogType(LogType.Warning, Get("LoggingWarning", StackTraceLogType.ScriptOnly));
+            if (Contains("LoggingLog"))
+                PlayerSettings.SetStackTraceLogType(LogType.Log, Get("LoggingLog", StackTraceLogType.ScriptOnly));
+            if (Contains("LoggingException"))
+                PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("LoggingException", StackTraceLogType.ScriptOnly));
 
             //Development Build
-            EditorUserBuildSettings.development = Get("DevelomentBuild", false);
-            EditorUserBuildSettings.connectProfiler = Get("AutoconnectProfiler", false);
-            EditorUserBuildSettings.allowDebugging = Get("ScriptDebugging", false);
-            EditorUserBuildSettings.buildScriptsOnly = Get("ScriptsOnlyBuild", false);
+            if (Contains("DevelomentBuild"))
+                EditorUserBuildSettings.development = Get("DevelomentBuild", false);
+            if (Contains("AutoconnectProfiler"))
+                EditorUserBuildSettings.connectProfiler = Get("AutoconnectProfiler", false);
+            if (Contains("ScriptDebugging"))
+                EditorUserBuildSettings.allowDebugging = Get("ScriptDebugging", false);
+            if (Contains("ScriptsOnlyBuild"))
+                EditorUserBuildSettings.buildScriptsOnly = Get("ScriptsOnlyBuild", false);
 
             switch (buildGroup)
             {
                 case BuildTargetGroup.Android:
-                    PlayerSettings.Android.bundleVersionCode = Get("VersionCode", 1);
+                    if (Contains("VersionCode"))
+                        PlayerSettings.Android.bundleVersionCode = Get("VersionCode", 1);
+
+                    if (Contains("Android.TargetArchitectures"))
+                        PlayerSettings.Android.targetArchitectures = Get<AndroidArchitecture>("Android.TargetArchitectures");
+                    if (Contains("Android.KeystoreName"))
+                        PlayerSettings.Android.keystoreName = Get("Android.KeystoreName");
+                    if (Contains("Android.KeystorePass"))
+                        PlayerSettings.Android.keystorePass = Get("Android.KeystorePass");
+                    if (Contains("Android.KeyaliasName"))
+                        PlayerSettings.Android.keyaliasName = Get("Android.KeyaliasName");
+                    if (Contains("Android.KeyaliasPass"))
+                        PlayerSettings.Android.keyaliasPass = Get("Android.KeyaliasPass");
+
                     break;
                 case BuildTargetGroup.iOS:
-                    PlayerSettings.iOS.buildNumber = Get("VersionCode");
+                    if (Contains("VersionCode"))
+                        PlayerSettings.iOS.buildNumber = Get("VersionCode");
                     break;
             }
 
             AssetDatabase.SaveAssets();
 
             AssetDatabase.Refresh();
-            //start build
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
 
-            Buld();
         }
 
         [DidReloadScripts]
@@ -298,6 +383,10 @@ namespace LWJ.Unity.Editor
             return Get<string>(name, null);
         }
 
+        public static T Get<T>(string name)
+        {
+            return Get<T>(name, default(T));
+        }
         public static T Get<T>(string name, T defaultValue)
         {
             string obj;
@@ -314,7 +403,7 @@ namespace LWJ.Unity.Editor
             }
             if (type.IsEnum)
             {
-                return (T)Enum.Parse(type, (string)obj);
+                return (T)ParseEnum(type, (string)obj);
             }
 
             return (T)Convert.ChangeType(obj, type);

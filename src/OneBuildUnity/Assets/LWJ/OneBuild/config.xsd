@@ -32,6 +32,7 @@
       <xs:element name="StripEngineCode" type="xs:boolean"/>
       <xs:element name="StrippingLevel" type="StrippingLevel"/>
       <xs:element name="ScriptingDefineSymbols"/>
+      <xs:element name="Il2CppCompilerConfiguration" type="Il2CppCompilerConfiguration"/>
       <!--Compile-->
       <xs:element name="CompressionMethod" type="xs:string"/>
       <xs:element name="TextureCompression" type="xs:string"/>
@@ -61,6 +62,7 @@
       <xs:element name="Android.KeystorePass"/>
       <xs:element name="Android.KeyaliasName"/>
       <xs:element name="Android.KeyaliasPass"/>
+      <xs:element name="Android.TargetArchitectures" type="AndroidArchitecture"/>
       <!--Android-->
 
       <!--iOS-->
@@ -93,6 +95,9 @@
       <!--Bugly SDK-->
 
       <!-- SDK Plugins Extensions -->
+
+
+      <xs:element name="Output.Dir"/>
 
     </xs:choice>
   </xs:group>
@@ -143,4 +148,32 @@
       <xs:enumeration value="UseMicroMSCorlib" />
     </xs:restriction>
   </xs:simpleType>
+
+  <xs:simpleType name="AndroidTargetDevice" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="FAT" />
+      <xs:enumeration value="ARMv7" />
+      <xs:enumeration value="x86" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="AndroidArchitecture" >
+    <xs:list>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="None"  />
+          <xs:enumeration value="ARMv7" />
+          <xs:enumeration value="ARM64" />
+          <xs:enumeration value="X86" />
+          <xs:enumeration value="All" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:list>
+  </xs:simpleType>
+  <xs:simpleType name="Il2CppCompilerConfiguration" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Debug" />
+      <xs:enumeration value="Release" />
+    </xs:restriction>
+  </xs:simpleType>
+
 </xs:schema>
