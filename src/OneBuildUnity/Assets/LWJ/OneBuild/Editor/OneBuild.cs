@@ -8,6 +8,7 @@ using UnityEditor.Callbacks;
 using System.Linq;
 using System.Xml;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LWJ.Unity.Editor
 {
@@ -96,8 +97,11 @@ namespace LWJ.Unity.Editor
             }
             if (log != null)
                 log.Append("*** config file ***").AppendLine();
-            HashSet<string> append = new HashSet<string>();
-            append.Add("ScriptingDefineSymbols");
+            Dictionary<string, string> append = new Dictionary<string, string>()
+            {
+                { "ScriptingDefineSymbols",";" }
+            };
+
             foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
             {
                 if (log != null)
@@ -109,36 +113,38 @@ namespace LWJ.Unity.Editor
                 {
                     string name, value;
 
-                    if (node.Name == "item")
+                    if (node.Name == "Item")
                     {
-                        name = node.Attributes["name"].Value;
+                        name = node.Attributes["Name"].Value;
                     }
                     else
                     {
                         name = node.LocalName;
                     }
                     value = node.InnerText;
-                    if (append.Contains(name))
+                    if (append.ContainsKey(name))
                     {
+                        string oldValue = null;
                         if (configs.ContainsKey(name))
                         {
-                            switch (name)
-                            {
-                                case "ScriptingDefineSymbols":
-                                    if (configs[name].EndsWith(";"))
-                                    {
-                                        configs[name] += value;
-                                    }
-                                    else
-                                    {
-                                        configs[name] += ";" + value;
-                                    }
-                                    break;
-                            }
+                            oldValue = configs[name];
+                            if (oldValue != null)
+                                oldValue = oldValue.TrimEnd();
+                        }
+                        if (string.IsNullOrEmpty(oldValue))
+                        {
+                            configs[name] = value;
                         }
                         else
                         {
-                            configs[name] = value;
+                            if (oldValue.EndsWith(append[name]))
+                            {
+                                configs[name] = oldValue + value;
+                            }
+                            else
+                            {
+                                configs[name] = oldValue + append[name] + value;
+                            }
                         }
                     }
                     else
@@ -149,6 +155,8 @@ namespace LWJ.Unity.Editor
 
 
             }
+            ReplaceTemplate(configs);
+
             if (log != null)
             {
                 log.Append("*** config file ***").AppendLine();
@@ -158,6 +166,7 @@ namespace LWJ.Unity.Editor
                 log.Append(JsonUtility.ToJson(new Serialization<string, string>(configs), true)).AppendLine();
                 //Debug.Log(sb.ToString());
             }
+
             return configs;
         }
 
@@ -192,6 +201,7 @@ namespace LWJ.Unity.Editor
         public static void UpdateConfig1()
         {
             configs = LoadConfig(null);
+
             UpdateConfig();
 
         }
@@ -359,8 +369,9 @@ namespace LWJ.Unity.Editor
             //start build
             var buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
-            string outputPath = Get("Output.Path", "");
-            string outputDir = Path.GetDirectoryName(outputPath);
+            string outputDir = Get("Output.Dir");
+            string fileName = Get("Output.FileName");
+            string outputPath = Path.Combine(outputDir, fileName);
 
             if (!Directory.Exists(outputDir))
                 Directory.CreateDirectory(outputDir);
@@ -371,7 +382,7 @@ namespace LWJ.Unity.Editor
                 options |= BuildOptions.AutoRunPlayer;
 
             BuildPipeline.BuildPlayer(EditorBuildSettings.scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
-
+         
         }
 
 
@@ -466,13 +477,17 @@ namespace LWJ.Unity.Editor
 
         public static string Get(string name)
         {
-            return Get<string>(name, null);
+            return Get<string>(name);
         }
 
         public static T Get<T>(string name)
         {
+            string obj;
+            if (!configs.TryGetValue(name, out obj))
+                throw new Exception("Not Key:" + name);
             return Get<T>(name, default(T));
         }
+
         public static T Get<T>(string name, T defaultValue)
         {
             string obj;
@@ -494,7 +509,61 @@ namespace LWJ.Unity.Editor
 
             return (T)Convert.ChangeType(obj, type);
         }
+        static Regex tplRegex = new Regex("\\{\\$(.*?)\\}");
+        /// <summary>
+        /// Template: {$Name}
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
+        public static string ReplaceTemplate(string input, Func<string, string> func)
+        {
+            if (func == null)
+                throw new ArgumentNullException("func");
+            string ret = tplRegex.Replace(input, (m) =>
+             {
+                 string name = m.Groups[1].Value;
+                 return func(name);
+             });
+            return ret;
+        }
+        /// <summary>
+        /// Template: {$Key}
+        /// </summary>
+        /// <param name="input"></param>
+        public static void ReplaceTemplate(Dictionary<string, string> input)
+        {
+            string value;
+            foreach (var key in input.Keys.ToArray())
+            {
+                value = input[key];
+                if (value == null)
+                    continue;
+                if (tplRegex.IsMatch(value))
+                {
+                    value = FindReplaceString(input, key, key);
+                    input[key] = value;
+                }
+            }
+        }
 
+        static string FindReplaceString(Dictionary<string, string> input, string key, string startKey)
+        {
+            string value = input[key];
+
+            value = ReplaceTemplate(value, (name) =>
+            {
+                if (input.Comparer.Equals(key, name))
+                    throw new Exception("reference self. key: [" + name + "]");
+                if (input.Comparer.Equals(startKey, name))
+                    throw new Exception("loop reference key1:[" + name + "], key2:[" + key + "]");
+                if (!input.ContainsKey(name))
+                    throw new Exception("not found key: [" + name + "]");
+
+                return FindReplaceString(input, name, startKey);
+            });
+            return value;
+        }
 
         enum Architecture
         {

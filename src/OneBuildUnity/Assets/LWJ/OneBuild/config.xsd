@@ -10,7 +10,7 @@
       <xs:sequence>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="items"/>
-          <xs:element  name="item" type="any_item" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element  name="Item" type="any_item" minOccurs="0" maxOccurs="unbounded"/>
         </xs:choice>
       </xs:sequence>
     </xs:complexType>
@@ -40,7 +40,7 @@
       <xs:element name="BuildSystem" type="xs:string"/>
       <xs:element name="ExportProject" type="xs:string"/>
       <xs:element name="BuildOptions.AutoRunPlayer" type="xs:boolean"/>
-      <xs:element name="Output.Path" type="xs:string" />
+
       
       
       <!--Debug Build-->
@@ -98,7 +98,8 @@
       <!-- SDK Plugins Extensions -->
 
 
-      <xs:element name="Output.Dir"/>
+      <xs:element name="Output.Dir" type="xs:string" />
+      <xs:element name="Output.FileName" type="xs:string" />
 
     </xs:choice>
   </xs:group>
@@ -106,7 +107,7 @@
   <xs:complexType  name="any_item">
     <xs:simpleContent >
       <xs:extension base="xs:string">
-        <xs:attribute name="name" type="xs:string"/>
+        <xs:attribute name="Name" type="xs:string"/>
       </xs:extension>
     </xs:simpleContent>
 
