@@ -17,41 +17,57 @@ namespace LWJ.Unity.Editor
         public static string ConfigDir = "Assets/Config";
         public static bool log = true;
 
+        static Dictionary<string, string> configs;
+
+        public static string VersionFileName = "version.txt";
+
         static string VersionPath
         {
             get { return ConfigDir + "/version.txt"; }
         }
+        private const string LastBuildVersionKey = "OneBuild.LastBuildVersion";
+        public static string LastBuildVersion
+        {
+            get { return PlayerPrefs.GetString(LastBuildVersionKey, string.Empty); }
+            set
+            {
+                PlayerPrefs.SetString(LastBuildVersionKey, value);
+                PlayerPrefs.Save();
+            }
+        }
+        public static Dictionary<string, string> Configs
+        {
+            get { return configs; }
+        }
 
-        public static string VersionFileName = "version.txt";
-        static StringBuilder sb = new StringBuilder();
-
-        public static void LoadConfig()
+        public static Dictionary<string, string> LoadConfig(out string version, StringBuilder log = null)
         {
             string currentPath = VersionPath;
-            string version = null;
+            version = "";
             if (File.Exists(currentPath))
             {
                 version = File.ReadAllText(currentPath);
             }
-            LoadConfig(version);
+            return LoadConfig(version, log);
         }
-        public static void LoadConfigDebug()
+
+        public static Dictionary<string, string> LoadConfigDebug(out string version, StringBuilder log = null)
         {
             string currentPath = VersionPath;
-            string version = "";
+            version = "";
             if (File.Exists(currentPath))
             {
                 version = File.ReadAllText(currentPath);
             }
             version += ",debug";
-            LoadConfig(version);
+            return LoadConfig(version, log);
         }
-        public static void LoadConfig(string version)
+        public static Dictionary<string, string> LoadConfig(string version, StringBuilder log = null)
         {
-            configs = new Dictionary<string, string>();
+            var configs = new Dictionary<string, string>();
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
-
+            LastBuildVersion = version;
             if (!string.IsNullOrEmpty(version))
             {
                 foreach (var part in version.Split(',', '\r', '\n'))
@@ -78,12 +94,14 @@ namespace LWJ.Unity.Editor
                     files.Add(file, tmp.Sum(o => matchs[o]));
                 }
             }
-
-            sb.Append("*** config file ***").AppendLine();
+            if (log != null)
+                log.Append("*** config file ***").AppendLine();
+            HashSet<string> append = new HashSet<string>();
+            append.Add("ScriptingDefineSymbols");
             foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
             {
-
-                sb.Append(file).AppendLine();
+                if (log != null)
+                    log.Append(file).AppendLine();
                 XmlDocument doc;
                 doc = new XmlDocument();
                 doc.Load(file);
@@ -100,30 +118,50 @@ namespace LWJ.Unity.Editor
                         name = node.LocalName;
                     }
                     value = node.InnerText;
-
-                    configs[name] = value;
+                    if (append.Contains(name))
+                    {
+                        if (configs.ContainsKey(name))
+                        {
+                            switch (name)
+                            {
+                                case "ScriptingDefineSymbols":
+                                    if (configs[name].EndsWith(";"))
+                                    {
+                                        configs[name] += value;
+                                    }
+                                    else
+                                    {
+                                        configs[name] += ";" + value;
+                                    }
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            configs[name] = value;
+                        }
+                    }
+                    else
+                    {
+                        configs[name] = value;
+                    }
                 }
 
 
             }
-            sb.Append("*** config file ***").AppendLine();
+            if (log != null)
+            {
+                log.Append("*** config file ***").AppendLine();
 
-            sb.Append("config data:").AppendLine();
+                log.Append("config data:").AppendLine();
 
-            sb.Append(JsonUtility.ToJson(new Serialization<string, string>(configs), true)).AppendLine();
-            //Debug.Log(sb.ToString());
-
+                log.Append(JsonUtility.ToJson(new Serialization<string, string>(configs), true)).AppendLine();
+                //Debug.Log(sb.ToString());
+            }
+            return configs;
         }
 
-        [MenuItem("LWJ/OneBuild/Build")]
-        public static void Build()
-        {
-            SetConfig();
-            //start build
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
 
-            Buld();
-        }
         static object ParseEnum(Type enumType, string str)
         {
             if (!enumType.IsEnum)
@@ -149,32 +187,25 @@ namespace LWJ.Unity.Editor
                 return Enum.Parse(enumType, str);
             }
         }
-        [MenuItem("LWJ/OneBuild/Build (Debug)")]
-        public static void BuildDebug()
+
+        [MenuItem("LWJ/OneBuild/Update Config", priority = 1)]
+        public static void UpdateConfig1()
+        {
+            configs = LoadConfig(null);
+            UpdateConfig();
+
+        }
+        [MenuItem("LWJ/OneBuild/ Update Config (Debug)", priority = 1)]
+        public static void UpdateConfigDebug()
+        {
+            string ver;
+            configs = LoadConfigDebug(out ver);
+            UpdateConfig();
+
+        }
+        public static void UpdateConfig()
         {
 
-            LoadConfigDebug();
-            SetConfig(false);
-            //start build
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
-
-            Buld();
-        }
-        [MenuItem("LWJ/OneBuild/Update Config")]
-        public static void SetConfig()
-        {
-            SetConfig(true);
-        }
-        [MenuItem("LWJ/OneBuild/ Update Config (Debug)")]
-        public static void SetConfigDebug()
-        {
-            LoadConfigDebug();
-            SetConfig(false);
-        }
-        public static void SetConfig(bool loadConfig)
-        {
-            if (loadConfig)
-                LoadConfig();
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
             if (Contains("CompanyName"))
                 PlayerSettings.companyName = Get("CompanyName");
@@ -205,6 +236,11 @@ namespace LWJ.Unity.Editor
             if (Contains("Il2CppCompilerConfiguration"))
                 PlayerSettings.SetIl2CppCompilerConfiguration(buildGroup, Get<Il2CppCompilerConfiguration>("Il2CppCompilerConfiguration"));
 
+            if (Contains("ScriptingDefineSymbols"))
+            {
+                string str = Get("ScriptingDefineSymbols");
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(buildGroup, str);
+            }
 
             if (Contains("LoggingError"))
                 PlayerSettings.SetStackTraceLogType(LogType.Error, Get("LoggingError", StackTraceLogType.ScriptOnly));
@@ -257,19 +293,70 @@ namespace LWJ.Unity.Editor
 
         }
 
+        [MenuItem("LWJ/OneBuild/Build", priority = 2)]
+        public static void Build()
+        {
+            string version;
+            configs = LoadConfig(out version);
+            LastBuildVersion = version;
+            UpdateConfig();
+            DelayBuild();
+        }
+
+        [MenuItem("LWJ/OneBuild/Build (Debug)", priority = 2)]
+        public static void BuildDebug()
+        {
+            string version;
+            configs = LoadConfigDebug(out version);
+            LastBuildVersion = version;
+            UpdateConfig();
+
+            DelayBuild();
+        }
+
         [DidReloadScripts]
         static void OnReloadScripts()
         {
+
             if (!EditorPrefs.GetBool(typeof(OneBuild).Name + ".startedbuild"))
                 return;
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
             Buld();
         }
 
-        static void Buld()
+        public static void DelayBuild()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogError("IsPlaying");
+                return;
+            }
+
+            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
+
+            EditorApplication.delayCall += () =>
+            {
+                if (!EditorApplication.isCompiling)
+                {
+                    Buld();
+                }
+            };
+        }
+
+        public static void Buld()
         {
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
 
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogError("IsPlaying");
+                return;
+            }
+            if (configs == null)
+            {
+                configs = LoadConfig(LastBuildVersion);
+            }
+            //start build
             var buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
             string outputPath = Get("Output.Path", "");
@@ -289,14 +376,13 @@ namespace LWJ.Unity.Editor
 
 
 
-        static Dictionary<string, string> configs;
 
 
         [PostProcessBuild(0)]
         public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
         {
-            sb = new StringBuilder();
-            LoadConfig();
+            var sb = new StringBuilder();
+            configs = LoadConfig(LastBuildVersion, sb);
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
 
@@ -421,7 +507,7 @@ namespace LWJ.Unity.Editor
         }
 
         [Serializable]
-        public class Serialization<TKey, TValue> : ISerializationCallbackReceiver
+        private class Serialization<TKey, TValue> : ISerializationCallbackReceiver
         {
             [SerializeField]
             List<TKey> keys;

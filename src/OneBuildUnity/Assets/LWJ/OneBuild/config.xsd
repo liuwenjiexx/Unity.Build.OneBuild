@@ -41,7 +41,8 @@
       <xs:element name="ExportProject" type="xs:string"/>
       <xs:element name="BuildOptions.AutoRunPlayer" type="xs:boolean"/>
       <xs:element name="Output.Path" type="xs:string" />
-
+      
+      
       <!--Debug Build-->
       <xs:element name="DevelomentBuild" type="xs:boolean"/>
       <xs:element name="AutoconnectProfiler" type="xs:boolean"/>
