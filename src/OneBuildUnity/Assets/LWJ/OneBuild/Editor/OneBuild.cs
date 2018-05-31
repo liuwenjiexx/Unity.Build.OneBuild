@@ -9,6 +9,10 @@ using System.Linq;
 using System.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
+using UnityEditor.Purchasing;
+using UnityEditor.CrashReporting;
+using UnityEditor.Advertisements;
+using UnityEditor.Analytics;
 
 namespace LWJ.Unity.Editor
 {
@@ -273,6 +277,26 @@ namespace LWJ.Unity.Editor
             if (Contains("ScriptsOnlyBuild"))
                 EditorUserBuildSettings.buildScriptsOnly = Get("ScriptsOnlyBuild", false);
 
+            if (Contains("Analytics.Enabled"))
+                AnalyticsSettings.enabled = Get<bool>("Analytics.Enabled");
+            if (Contains("Analytics.TestMode"))
+                AnalyticsSettings.testMode = Get<bool>("Analytics.TestMode");
+
+            if (Contains("Advertisement.Enabled"))
+                AdvertisementSettings.enabled = Get<bool>("Advertisement.Enabled");
+            if (Contains("Advertisement.TestMode"))
+                AdvertisementSettings.testMode = Get<bool>("Advertisement.TestMode");
+            if (Contains("Advertisement.InitializeOnStartup"))
+                AdvertisementSettings.initializeOnStartup = Get<bool>("Advertisement.InitializeOnStartup");
+
+            if (Contains("CrashReporting.Enabled"))
+                CrashReportingSettings.enabled = Get<bool>("CrashReporting.Enabled");
+            if (Contains("CrashReporting.CaptureEditorExceptions"))
+                CrashReportingSettings.captureEditorExceptions = Get<bool>("CrashReporting.CaptureEditorExceptions");
+
+            if (Contains("Purchasing.Enabled"))
+                PurchasingSettings.enabled = Get<bool>("Purchasing.Enabled");
+
             switch (buildGroup)
             {
                 case BuildTargetGroup.Android:
@@ -382,7 +406,7 @@ namespace LWJ.Unity.Editor
                 options |= BuildOptions.AutoRunPlayer;
 
             BuildPipeline.BuildPlayer(EditorBuildSettings.scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
-         
+
         }
 
 

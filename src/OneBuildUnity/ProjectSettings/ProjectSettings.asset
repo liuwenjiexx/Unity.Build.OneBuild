@@ -595,6 +595,7 @@ PlayerSettings:
   webGLCompressionFormat: 1
   webGLLinkerTarget: 0
   scriptingDefineSymbols:
+    1: DEBUG
     7: ANDROID;DEBUG
   platformArchitecture:
     Android: 2
@@ -604,6 +605,7 @@ PlayerSettings:
     Standalone: 0
   il2cppCompilerConfiguration:
     Android: 0
+    Standalone: 0
   incrementalIl2cppBuild: {}
   allowUnsafeCode: 0
   additionalIl2CppArgs: 

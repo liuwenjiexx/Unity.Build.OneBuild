@@ -41,8 +41,8 @@
       <xs:element name="ExportProject" type="xs:string"/>
       <xs:element name="BuildOptions.AutoRunPlayer" type="xs:boolean"/>
 
-      
-      
+
+
       <!--Debug Build-->
       <xs:element name="DevelomentBuild" type="xs:boolean"/>
       <xs:element name="AutoconnectProfiler" type="xs:boolean"/>
@@ -69,6 +69,31 @@
       <!--iOS-->
 
       <!--iOS-->
+
+      <!--Services Settings-->
+      
+      <!--AnalyticsSettings-->
+      <xs:element name="Analytics.Enabled" type="xs:boolean" />
+      <xs:element name="Analytics.TestMode" type="xs:boolean" />
+      <!--AnalyticsSettings-->
+
+      <!--AdvertisementSettings-->
+      <xs:element name="Advertisement.Enabled" type="xs:boolean" />
+      <xs:element name="Advertisement.TestMode" type="xs:boolean" />
+      <xs:element name="Advertisement.InitializeOnStartup" type="xs:boolean" />
+      <!--AdvertisementSettings-->
+
+      <!--PurchasingSettings-->
+      <xs:element name="Purchasing.Enabled" type="xs:boolean" />
+      <!--PurchasingSettings-->
+
+      <!--CrashReportingSettings-->
+      <xs:element name="CrashReporting.Enabled" type="xs:boolean" />
+      <xs:element name="CrashReporting.CaptureEditorExceptions" type="xs:boolean" />
+      <!--CrashReportingSettings-->
+
+      <!--Services Settings-->
+
 
       <!-- SDK Plugins Extensions -->
 
