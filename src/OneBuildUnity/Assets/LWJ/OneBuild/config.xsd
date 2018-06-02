@@ -33,6 +33,7 @@
       <xs:element name="StrippingLevel" type="StrippingLevel"/>
       <xs:element name="ScriptingDefineSymbols"/>
       <xs:element name="Il2CppCompilerConfiguration" type="Il2CppCompilerConfiguration"/>
+      <xs:element name="ScriptCallOptimization" type="ScriptCallOptimizationLevel"/>
       <!--Compile-->
       <xs:element name="CompressionMethod" type="xs:string"/>
       <xs:element name="TextureCompression" type="xs:string"/>
@@ -57,6 +58,9 @@
       <xs:element name="LoggingLog" type="StackTraceLogType"/>
       <xs:element name="LoggingException" type="StackTraceLogType"/>
 
+      <xs:element name="DefaultOrientation" type="UIOrientation"/>
+      
+
       <!--Android-->
 
       <xs:element name="Android.KeystoreName"/>
@@ -67,11 +71,31 @@
       <!--Android-->
 
       <!--iOS-->
+      
+      <xs:element name="iOS.HideHomeButton" type="xs:boolean"/>
+      <!--<xs:element name="iOS.AppInBackgroundBehavior"/>
+      <xs:element name="iOS.BackgroundModes"/>-->
+      <xs:element name="iOS.ForceHardShadowsOnMetal" type="xs:boolean"/>
+      <xs:element name="iOS.AllowHTTPDownload" type="xs:boolean"/>
+      <xs:element name="iOS.ManualProvisioningProfileID"/>
+      <xs:element name="iOS.AppleDeveloperTeamID"/>
+      <xs:element name="iOS.AppleEnableAutomaticSigning" type="xs:boolean"/>
+      <xs:element name="iOS.ManualProvisioningProfileType" type="ProvisioningProfileType"/>
+      <xs:element name="iOS.TargetDevice" type="iOS.TargetDevice"/>
+      <xs:element name="iOS.SdkVersion" type="iOS.SdkVersion"/>
+      <xs:element name="iOS.TargetOSVersionString"/>
+      <xs:element name="iOS.UseOnDemandResources" type="xs:boolean"/>
 
+      <xs:element name="iOS.GameCenter" type="xs:boolean"/>
       <!--iOS-->
 
+      <!-- tvOS-->
+      <xs:element name="tvOS.ManualProvisioningProfileType" type="ProvisioningProfileType"/>
+      <!-- tvOS-->
+
+
       <!--Services Settings-->
-      
+
       <!--AnalyticsSettings-->
       <xs:element name="Analytics.Enabled" type="xs:boolean" />
       <xs:element name="Analytics.TestMode" type="xs:boolean" />
@@ -202,5 +226,49 @@
       <xs:enumeration value="Release" />
     </xs:restriction>
   </xs:simpleType>
+
+  <xs:simpleType name="ProvisioningProfileType" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Automatic" />
+      <xs:enumeration value="Development" />
+      <xs:enumeration value="Distribution" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ScriptCallOptimizationLevel" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="SlowAndSafe" />
+      <xs:enumeration value="FastButNoExceptions" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="UIOrientation" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Portrait" />
+      <xs:enumeration value="PortraitUpsideDown" />
+      <xs:enumeration value="LandscapeRight" />
+      <xs:enumeration value="LandscapeLeft" />
+      <xs:enumeration value="AutoRotation" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+
+  <!-- iOS Enum-->
+  <xs:simpleType name="iOS.TargetDevice" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="iPhoneOnly" />
+      <xs:enumeration value="iPadOnly" />
+      <xs:enumeration value="iPhoneAndiPad" />
+    </xs:restriction>
+  </xs:simpleType>
+
+ 
+  <xs:simpleType name="iOS.SdkVersion" >
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="DeviceSDK" />
+      <xs:enumeration value="SimulatorSDK" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- iOS Enum-->
 
 </xs:schema>

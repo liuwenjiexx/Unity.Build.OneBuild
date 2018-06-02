@@ -204,17 +204,21 @@ namespace LWJ.Unity.Editor
         [MenuItem("LWJ/OneBuild/Update Config", priority = 1)]
         public static void UpdateConfig1()
         {
-            configs = LoadConfig(null);
+            StringBuilder sb = new StringBuilder();
+            configs = LoadConfig(null, sb);
 
             UpdateConfig();
+            Debug.Log("Update Config\n" + sb.ToString());
 
         }
         [MenuItem("LWJ/OneBuild/ Update Config (Debug)", priority = 1)]
         public static void UpdateConfigDebug()
         {
             string ver;
-            configs = LoadConfigDebug(out ver);
+            StringBuilder sb = new StringBuilder();
+            configs = LoadConfigDebug(out ver, sb);
             UpdateConfig();
+            Debug.Log("Update Config\n" + sb.ToString());
 
         }
         public static void UpdateConfig()
@@ -226,7 +230,7 @@ namespace LWJ.Unity.Editor
             if (Contains("ProductName"))
                 PlayerSettings.productName = Get("ProductName");
             if (Contains("ApplicationIdentifier"))
-                PlayerSettings.applicationIdentifier = Get("ApplicationIdentifier");
+                PlayerSettings.SetApplicationIdentifier(buildGroup, Get("ApplicationIdentifier"));
             if (buildGroup == BuildTargetGroup.Android || buildGroup == BuildTargetGroup.iOS)
             {
                 if (Contains("Version"))
@@ -266,6 +270,9 @@ namespace LWJ.Unity.Editor
                 PlayerSettings.SetStackTraceLogType(LogType.Log, Get("LoggingLog", StackTraceLogType.ScriptOnly));
             if (Contains("LoggingException"))
                 PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("LoggingException", StackTraceLogType.ScriptOnly));
+
+            if (Contains("DefaultOrientation"))
+                PlayerSettings.defaultInterfaceOrientation = Get<UIOrientation>("DefaultOrientation");
 
             //Development Build
             if (Contains("DevelomentBuild"))
@@ -318,6 +325,32 @@ namespace LWJ.Unity.Editor
                 case BuildTargetGroup.iOS:
                     if (Contains("VersionCode"))
                         PlayerSettings.iOS.buildNumber = Get("VersionCode");
+                    if (Contains("iOS.HideHomeButton"))
+                        PlayerSettings.iOS.hideHomeButton = Get<bool>("iOS.HideHomeButton");
+                    if (Contains("iOS.ForceHardShadowsOnMetal"))
+                        PlayerSettings.iOS.forceHardShadowsOnMetal = Get<bool>("iOS.ForceHardShadowsOnMetal");
+                    if (Contains("iOS.AllowHTTPDownload"))
+                        PlayerSettings.iOS.allowHTTPDownload = Get<bool>("iOS.AllowHTTPDownload");
+                    if (Contains("iOS.ManualProvisioningProfileID"))
+                        PlayerSettings.iOS.iOSManualProvisioningProfileID = Get("iOS.ManualProvisioningProfileID");
+                    if (Contains("iOS.AppleDeveloperTeamID"))
+                        PlayerSettings.iOS.appleDeveloperTeamID = Get("iOS.AppleDeveloperTeamID");
+                    if (Contains("iOS.AppleEnableAutomaticSigning"))
+                        PlayerSettings.iOS.appleEnableAutomaticSigning = Get<bool>("iOS.AppleEnableAutomaticSigning");
+                    if (Contains("iOS.ManualProvisioningProfileType"))
+                        PlayerSettings.iOS.iOSManualProvisioningProfileType = Get<ProvisioningProfileType>("iOS.ManualProvisioningProfileType");
+
+                    if (Contains("iOS.TargetDevice"))
+                        PlayerSettings.iOS.targetDevice = Get<iOSTargetDevice>("iOS.TargetDevice");
+                    if (Contains("iOS.SdkVersion"))
+                        PlayerSettings.iOS.sdkVersion = Get<iOSSdkVersion>("iOS.SdkVersion");
+                    if (Contains("iOS.TargetOSVersionString"))
+                        PlayerSettings.iOS.targetOSVersionString = Get("iOS.TargetOSVersionString");
+                    if (Contains("ScriptCallOptimization"))
+                        PlayerSettings.iOS.scriptCallOptimization = Get<ScriptCallOptimizationLevel>("ScriptCallOptimization");
+                    if (Contains("iOS.UseOnDemandResources"))
+                        PlayerSettings.iOS.useOnDemandResources = Get<bool>("iOS.UseOnDemandResources");
+                    
                     break;
             }
 
@@ -394,7 +427,7 @@ namespace LWJ.Unity.Editor
             var buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
             string outputDir = Get("Output.Dir");
-            string fileName = Get("Output.FileName");
+            string fileName = Get("Output.FileName", string.Empty);
             string outputPath = Path.Combine(outputDir, fileName);
 
             if (!Directory.Exists(outputDir))
@@ -433,6 +466,19 @@ namespace LWJ.Unity.Editor
                 string targetGuid = pbxProj.TargetGuidByName("Unity-iPhone");
                 pbxProj.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
 
+
+                //pbxProj.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-all_load");
+                //pbxProj.AddFrameworkToProject(targetGuid, "WebKit.framework", true);
+                //pbxProj.AddFrameworkToProject(targetGuid, "StoreKit.framework", false);
+                //pbxProj.AddCapability(targetGuid, PBXCapabilityType.InAppPurchase);
+                if (Get("iOS.GameCenter", false))
+                {
+                    //Game Center
+                    pbxProj.AddFrameworkToProject(targetGuid, "GameKit.framework", false);
+                    pbxProj.AddCapability(targetGuid, PBXCapabilityType.GameCenter);
+                }
+
+
 #if BUGLY_SDK
             //Bugly
 
@@ -456,11 +502,13 @@ namespace LWJ.Unity.Editor
                 plist.ReadFromString(File.ReadAllText(plistPath));
                 PlistElementDict rootDict = plist.root;
 
-                //Game Center
-                var caps = rootDict.CreateArray("UIRequiredDeviceCapabilities");
-                caps.AddString("armv7");
-                caps.AddString("gamekit");
-
+                if (Get("iOS.GameCenter", false))
+                {
+                    //Game Center
+                    var caps = rootDict.CreateArray("UIRequiredDeviceCapabilities");
+                    caps.AddString("armv7");
+                    caps.AddString("gamekit");
+                }
 
                 plist.WriteToFile(plistPath);
             }
