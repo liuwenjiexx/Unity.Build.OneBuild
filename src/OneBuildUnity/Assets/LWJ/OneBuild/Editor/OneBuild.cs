@@ -17,6 +17,8 @@ using UnityEditor.Analytics;
 namespace LWJ.Unity.Editor
 {
 
+    using LogType = UnityEngine.LogType;
+
     public static class OneBuild
     {
         public static string ConfigDir = "Assets/Config";
@@ -211,7 +213,7 @@ namespace LWJ.Unity.Editor
             Debug.Log("Update Config\n" + sb.ToString());
 
         }
-        [MenuItem("LWJ/OneBuild/ Update Config (Debug)", priority = 1)]
+        [MenuItem("LWJ/OneBuild/Update Config (Debug)", priority = 1)]
         public static void UpdateConfigDebug()
         {
             string ver;
@@ -250,10 +252,12 @@ namespace LWJ.Unity.Editor
                 PlayerSettings.stripEngineCode = Get("StripEngineCode", true);
             if (Contains("StrippingLevel"))
                 PlayerSettings.strippingLevel = Get("StrippingLevel", StrippingLevel.Disabled);
-
+            if (Contains("AotOptions"))
+                PlayerSettings.aotOptions = Get("AotOptions");
+#if !(UNITY_2017)
             if (Contains("Il2CppCompilerConfiguration"))
                 PlayerSettings.SetIl2CppCompilerConfiguration(buildGroup, Get<Il2CppCompilerConfiguration>("Il2CppCompilerConfiguration"));
-
+#endif
             if (Contains("ScriptingDefineSymbols"))
             {
                 string str = Get("ScriptingDefineSymbols");
@@ -310,8 +314,6 @@ namespace LWJ.Unity.Editor
                     if (Contains("VersionCode"))
                         PlayerSettings.Android.bundleVersionCode = Get("VersionCode", 1);
 
-                    if (Contains("Android.TargetArchitectures"))
-                        PlayerSettings.Android.targetArchitectures = Get<AndroidArchitecture>("Android.TargetArchitectures");
                     if (Contains("Android.KeystoreName"))
                         PlayerSettings.Android.keystoreName = Get("Android.KeystoreName");
                     if (Contains("Android.KeystorePass"))
@@ -320,7 +322,10 @@ namespace LWJ.Unity.Editor
                         PlayerSettings.Android.keyaliasName = Get("Android.KeyaliasName");
                     if (Contains("Android.KeyaliasPass"))
                         PlayerSettings.Android.keyaliasPass = Get("Android.KeyaliasPass");
-
+#if !(UNITY_2017)
+                    if (Contains("Android.TargetArchitectures"))
+                        PlayerSettings.Android.targetArchitectures = Get<AndroidArchitecture>("Android.TargetArchitectures");
+#endif
                     break;
                 case BuildTargetGroup.iOS:
                     if (Contains("VersionCode"))
@@ -337,8 +342,7 @@ namespace LWJ.Unity.Editor
                         PlayerSettings.iOS.appleDeveloperTeamID = Get("iOS.AppleDeveloperTeamID");
                     if (Contains("iOS.AppleEnableAutomaticSigning"))
                         PlayerSettings.iOS.appleEnableAutomaticSigning = Get<bool>("iOS.AppleEnableAutomaticSigning");
-                    if (Contains("iOS.ManualProvisioningProfileType"))
-                        PlayerSettings.iOS.iOSManualProvisioningProfileType = Get<ProvisioningProfileType>("iOS.ManualProvisioningProfileType");
+             
 
                     if (Contains("iOS.TargetDevice"))
                         PlayerSettings.iOS.targetDevice = Get<iOSTargetDevice>("iOS.TargetDevice");
@@ -350,7 +354,11 @@ namespace LWJ.Unity.Editor
                         PlayerSettings.iOS.scriptCallOptimization = Get<ScriptCallOptimizationLevel>("ScriptCallOptimization");
                     if (Contains("iOS.UseOnDemandResources"))
                         PlayerSettings.iOS.useOnDemandResources = Get<bool>("iOS.UseOnDemandResources");
-                    
+                
+#if !(UNITY_2017)
+                           if (Contains("iOS.ManualProvisioningProfileType"))
+                        PlayerSettings.iOS.iOSManualProvisioningProfileType = Get<ProvisioningProfileType>("iOS.ManualProvisioningProfileType");
+#endif
                     break;
             }
 

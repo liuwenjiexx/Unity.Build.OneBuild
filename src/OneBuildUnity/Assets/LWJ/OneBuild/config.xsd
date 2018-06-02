@@ -41,7 +41,7 @@
       <xs:element name="BuildSystem" type="xs:string"/>
       <xs:element name="ExportProject" type="xs:string"/>
       <xs:element name="BuildOptions.AutoRunPlayer" type="xs:boolean"/>
-
+      <xs:element name="AotOptions" type="xs:string"/>
 
 
       <!--Debug Build-->
