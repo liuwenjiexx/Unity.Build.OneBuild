@@ -13,6 +13,8 @@ using UnityEditor.Purchasing;
 using UnityEditor.CrashReporting;
 using UnityEditor.Advertisements;
 using UnityEditor.Analytics;
+using System.Reflection;
+
 
 namespace LWJ.Unity.Editor
 {
@@ -22,7 +24,7 @@ namespace LWJ.Unity.Editor
         public static string ConfigDir = "Assets/Config";
         public static bool log = true;
 
-        static Dictionary<string, string> configs;
+        static Dictionary<string, string[]> configs;
 
         public static string VersionFileName = "version.txt";
 
@@ -40,12 +42,33 @@ namespace LWJ.Unity.Editor
                 PlayerPrefs.Save();
             }
         }
-        public static Dictionary<string, string> Configs
+        public static Dictionary<string, string[]> Configs
         {
             get { return configs; }
         }
 
-        public static Dictionary<string, string> LoadConfig(out string version, StringBuilder log = null)
+        public static Dictionary<string, object> GlobalVars;
+
+        public static HashSet<string> CustomMembers = new HashSet<string>()
+        {
+            "version",
+            "versionCode",
+            "output.dir",
+            "output.filename",
+            "loggingError",
+            "loggingAssert",
+            "loggingWarning",
+            "loggingLog",
+            "loggingException",
+            "BuildOptions.AutoRunPlayer",
+        };
+        public static Dictionary<string, string> append = new Dictionary<string, string>()
+        {
+            { "ScriptingDefineSymbols",";" }
+        };
+
+
+        public static Dictionary<string, string[]> LoadConfig(out string version, StringBuilder log = null)
         {
             string currentPath = VersionPath;
             version = "";
@@ -56,7 +79,7 @@ namespace LWJ.Unity.Editor
             return LoadConfig(version, log);
         }
 
-        public static Dictionary<string, string> LoadConfigDebug(out string version, StringBuilder log = null)
+        public static Dictionary<string, string[]> LoadConfigDebug(out string version, StringBuilder log = null)
         {
             string currentPath = VersionPath;
             version = "";
@@ -67,12 +90,19 @@ namespace LWJ.Unity.Editor
             version += ",debug";
             return LoadConfig(version, log);
         }
-        public static Dictionary<string, string> LoadConfig(string version, StringBuilder log = null)
+        public static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
         {
-            var configs = new Dictionary<string, string>();
+            var configs = new Dictionary<string, string[]>();
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
             LastBuildVersion = version;
+
+            GlobalVars = new Dictionary<string, object>()
+            {
+                {"DateTime",DateTime.Now },
+                {"BuildTargetGroup" , EditorUserBuildSettings.selectedBuildTargetGroup}
+            };
+
             if (!string.IsNullOrEmpty(version))
             {
                 foreach (var part in version.Split(',', '\r', '\n'))
@@ -101,10 +131,7 @@ namespace LWJ.Unity.Editor
             }
             if (log != null)
                 log.Append("*** config file ***").AppendLine();
-            Dictionary<string, string> append = new Dictionary<string, string>()
-            {
-                { "ScriptingDefineSymbols",";" }
-            };
+
 
             foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
             {
@@ -115,45 +142,50 @@ namespace LWJ.Unity.Editor
                 doc.Load(file);
                 foreach (XmlNode node in doc.DocumentElement.SelectNodes("*"))
                 {
-                    string name, value;
-
-                    if (node.Name == "Item")
+                    string name;
+                    string[] values;
+                    name = node.LocalName;
+                    var valueNodes = node.SelectNodes("*");
+                    if (valueNodes.Count > 0)
                     {
-                        name = node.Attributes["Name"].Value;
+                        values = new string[valueNodes.Count];
+                        for (int i = 0; i < valueNodes.Count; i++)
+                        {
+                            values[i] = valueNodes[i].InnerText;
+                        }
                     }
                     else
                     {
-                        name = node.LocalName;
+                        values = new string[] { node.InnerText };
                     }
-                    value = node.InnerText;
                     if (append.ContainsKey(name))
                     {
-                        string oldValue = null;
+                        string[] oldValue = null;
                         if (configs.ContainsKey(name))
                         {
                             oldValue = configs[name];
-                            if (oldValue != null)
-                                oldValue = oldValue.TrimEnd();
+                            if (oldValue[0] != null)
+                                oldValue[0] = oldValue[0].TrimEnd();
                         }
-                        if (string.IsNullOrEmpty(oldValue))
+                        if (oldValue == null || string.IsNullOrEmpty(oldValue[0]))
                         {
-                            configs[name] = value;
+                            configs[name] = values;
                         }
                         else
                         {
-                            if (oldValue.EndsWith(append[name]))
+                            if (oldValue[0].EndsWith(append[name]))
                             {
-                                configs[name] = oldValue + value;
+                                oldValue[0] = oldValue[0] + values[0];
                             }
                             else
                             {
-                                configs[name] = oldValue + append[name] + value;
+                                oldValue[0] = oldValue[0] + append[name] + values[0];
                             }
                         }
                     }
                     else
                     {
-                        configs[name] = value;
+                        configs[name] = values;
                     }
                 }
 
@@ -167,7 +199,9 @@ namespace LWJ.Unity.Editor
 
                 log.Append("config data:").AppendLine();
 
-                log.Append(JsonUtility.ToJson(new Serialization<string, string>(configs), true)).AppendLine();
+                var tmp = configs.ToDictionary(o => o.Key, o => string.Join(",", o.Value));
+                log.Append(JsonUtility.ToJson(new Serialization<string, string>(tmp), true))
+                    .AppendLine();
                 //Debug.Log(sb.ToString());
             }
 
@@ -180,19 +214,7 @@ namespace LWJ.Unity.Editor
             if (!enumType.IsEnum)
                 throw new Exception("Not Enum Type: " + enumType.FullName);
             if (enumType.IsDefined(typeof(FlagsAttribute), true))
-            {
-                //uint n = 0;
-                //Debug.Log(typeof(uint).IsAssignableFrom(enumType));
-                //Debug.Log(enumType.IsAssignableFrom(typeof(uint)));
-                //Debug.Log(enumType.IsSubclassOf(typeof(uint)));
-                //Debug.Log(typeof(uint).IsSubclassOf(enumType));
-                //foreach (var part in str.Split(','))
-                //{
-                //    if (string.IsNullOrEmpty(part))
-                //        continue;
-                //    n |= (uint)Enum.Parse(enumType, part);
-                //}
-                //return Convert.ChangeType(n, enumType);
+            {                
                 return Enum.Parse(enumType, str.Replace(' ', ','));
             }
             else
@@ -221,136 +243,169 @@ namespace LWJ.Unity.Editor
             Debug.Log("Update Config\n" + sb.ToString());
 
         }
+
+        static MemberInfo FindSetMember(string typeAndMember, string[] args)
+        {
+            string[] parts = typeAndMember.Split('.');
+            MemberInfo member = null;
+            Type type = null;
+            string memberName;
+            if (parts.Length > 1)
+            {
+                memberName = parts[parts.Length - 1];
+                string typeName;
+                typeName = typeAndMember.Substring(0, typeAndMember.LastIndexOf('.'));
+                type = Type.GetType(typeName);
+
+                if (type == null)
+                    type = FindType(typeName);
+                if (type == null)
+                    type = FindType("UnityEditor." + typeName);
+
+            }
+            else
+            {
+                memberName = parts[0];
+            }
+
+            if (type != null)
+            {
+                member = FindSetMember(type, memberName, args);
+            }
+            else
+            {
+                member = FindSetMember(typeof(PlayerSettings), memberName, args);
+                if (member == null)
+                    member = FindSetMember(typeof(EditorUserBuildSettings), memberName, args);
+            }
+
+            return member;
+        }
+
+        static MemberInfo FindSetMember(Type type, string memberName, string[] args)
+        {
+            string lowerName = memberName.ToLower();
+            var members = type.GetMembers(BindingFlags.Static | BindingFlags.Public | BindingFlags.SetField | BindingFlags.SetProperty | BindingFlags.InvokeMethod);
+            MemberInfo member = null;
+            foreach (var mInfo in members)
+            {
+                if (mInfo.MemberType == MemberTypes.Field || mInfo.MemberType == MemberTypes.Property)
+                {
+                    if (mInfo.Name.ToLower() == lowerName)
+                    {
+                        member = mInfo;
+                        break;
+                    }
+                }
+            }
+            if (member == null)
+            {
+                string setName = "set" + lowerName;
+                foreach (var mInfo in members)
+                {
+                    if (mInfo.MemberType == MemberTypes.Method)
+                    {
+                        if (mInfo.Name.ToLower() == lowerName || mInfo.Name.ToLower() == setName)
+                        {
+                            MethodInfo m = (MethodInfo)mInfo;
+                            if (m.GetParameters().Length == args.Length)
+                            {
+                                member = mInfo;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return member;
+        }
+
+        static void SetMember(string typeAndMember, string[] values)
+        {
+            MemberInfo member = FindSetMember(typeAndMember, values);
+            if (member == null)
+            {
+                Debug.LogError("Not Find Member: " + typeAndMember);
+            }
+            try
+            {
+                if (member is PropertyInfo)
+                {
+                    PropertyInfo pInfo = (PropertyInfo)member;
+                    pInfo.SetValue(null, ChangeType(values[0], pInfo.PropertyType), null);
+                }
+                else if (member is FieldInfo)
+                {
+                    FieldInfo fInfo = (FieldInfo)member;
+                    fInfo.SetValue(null, ChangeType(values[0], fInfo.FieldType));
+                }
+                else if (member is MethodInfo)
+                {
+                    MethodInfo mInfo = (MethodInfo)member;
+                    object[] args = mInfo.GetParameters()
+                        .Select((o, i) => ChangeType(values[i], o.ParameterType))
+                        .ToArray();
+                    mInfo.Invoke(null, args);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Set Member Error: " + typeAndMember + " = " + string.Join(",", values));
+                throw ex;
+            }
+        }
+
+        static object ChangeType(string value, Type type)
+        {
+            if (type.IsEnum)
+                return ParseEnum(type, value);
+            return Convert.ChangeType(value, type);
+        }
+
+        static Type FindType(string typeName)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().SelectMany(o => o.GetTypes()).Where(o => o.FullName == typeName || (o.IsNested && o.FullName.Replace('+', '.') == typeName)).FirstOrDefault();
+        }
+
         public static void UpdateConfig()
         {
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-            if (Contains("CompanyName"))
-                PlayerSettings.companyName = Get("CompanyName");
-            if (Contains("ProductName"))
-                PlayerSettings.productName = Get("ProductName");
-            if (Contains("ApplicationIdentifier"))
-                PlayerSettings.SetApplicationIdentifier(buildGroup, Get("ApplicationIdentifier"));
+
+
+            foreach (var item in configs)
+            {
+                if (CustomMembers.Contains(item.Key))
+                    continue;
+                SetMember(item.Key, item.Value);
+            }
+
             if (buildGroup == BuildTargetGroup.Android || buildGroup == BuildTargetGroup.iOS)
             {
                 if (Contains("Version"))
                     PlayerSettings.bundleVersion = Get("Version");
             }
-            if (Contains("ApiCompatibilityLevel"))
-                PlayerSettings.SetApiCompatibilityLevel(buildGroup, Get<ApiCompatibilityLevel>("ApiCompatibilityLevel"));
 
-
-
-            if (Contains("ScriptingBackend"))
-                PlayerSettings.SetScriptingBackend(buildGroup, Get<ScriptingImplementation>("ScriptingBackend"));
-
-            if (Contains("Architecture"))
-                PlayerSettings.SetArchitecture(buildGroup, (int)Get<Architecture>("Architecture"));
-            if (Contains("StripEngineCode"))
-                PlayerSettings.stripEngineCode = Get("StripEngineCode", true);
-            if (Contains("StrippingLevel"))
-                PlayerSettings.strippingLevel = Get("StrippingLevel", StrippingLevel.Disabled);
-
-            if (Contains("Il2CppCompilerConfiguration"))
-                PlayerSettings.SetIl2CppCompilerConfiguration(buildGroup, Get<Il2CppCompilerConfiguration>("Il2CppCompilerConfiguration"));
-
-            if (Contains("ScriptingDefineSymbols"))
-            {
-                string str = Get("ScriptingDefineSymbols");
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(buildGroup, str);
-            }
-
-            if (Contains("LoggingError"))
-                PlayerSettings.SetStackTraceLogType(LogType.Error, Get("LoggingError", StackTraceLogType.ScriptOnly));
-            if (Contains("LoggingAssert"))
-                PlayerSettings.SetStackTraceLogType(LogType.Assert, Get("LoggingAssert", StackTraceLogType.ScriptOnly));
-            if (Contains("LoggingWarning"))
-                PlayerSettings.SetStackTraceLogType(LogType.Warning, Get("LoggingWarning", StackTraceLogType.ScriptOnly));
-            if (Contains("LoggingLog"))
-                PlayerSettings.SetStackTraceLogType(LogType.Log, Get("LoggingLog", StackTraceLogType.ScriptOnly));
-            if (Contains("LoggingException"))
-                PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("LoggingException", StackTraceLogType.ScriptOnly));
-
-            if (Contains("DefaultOrientation"))
-                PlayerSettings.defaultInterfaceOrientation = Get<UIOrientation>("DefaultOrientation");
-
-            //Development Build
-            if (Contains("DevelomentBuild"))
-                EditorUserBuildSettings.development = Get("DevelomentBuild", false);
-            if (Contains("AutoconnectProfiler"))
-                EditorUserBuildSettings.connectProfiler = Get("AutoconnectProfiler", false);
-            if (Contains("ScriptDebugging"))
-                EditorUserBuildSettings.allowDebugging = Get("ScriptDebugging", false);
-            if (Contains("ScriptsOnlyBuild"))
-                EditorUserBuildSettings.buildScriptsOnly = Get("ScriptsOnlyBuild", false);
-
-            if (Contains("Analytics.Enabled"))
-                AnalyticsSettings.enabled = Get<bool>("Analytics.Enabled");
-            if (Contains("Analytics.TestMode"))
-                AnalyticsSettings.testMode = Get<bool>("Analytics.TestMode");
-
-            if (Contains("Advertisement.Enabled"))
-                AdvertisementSettings.enabled = Get<bool>("Advertisement.Enabled");
-            if (Contains("Advertisement.TestMode"))
-                AdvertisementSettings.testMode = Get<bool>("Advertisement.TestMode");
-            if (Contains("Advertisement.InitializeOnStartup"))
-                AdvertisementSettings.initializeOnStartup = Get<bool>("Advertisement.InitializeOnStartup");
-
-            if (Contains("CrashReporting.Enabled"))
-                CrashReportingSettings.enabled = Get<bool>("CrashReporting.Enabled");
-            if (Contains("CrashReporting.CaptureEditorExceptions"))
-                CrashReportingSettings.captureEditorExceptions = Get<bool>("CrashReporting.CaptureEditorExceptions");
-
-            if (Contains("Purchasing.Enabled"))
-                PurchasingSettings.enabled = Get<bool>("Purchasing.Enabled");
+            if (Contains("loggingError"))
+                PlayerSettings.SetStackTraceLogType(LogType.Error, Get("loggingError", StackTraceLogType.ScriptOnly));
+            if (Contains("loggingAssert"))
+                PlayerSettings.SetStackTraceLogType(LogType.Assert, Get("loggingAssert", StackTraceLogType.ScriptOnly));
+            if (Contains("loggingWarning"))
+                PlayerSettings.SetStackTraceLogType(LogType.Warning, Get("loggingWarning", StackTraceLogType.ScriptOnly));
+            if (Contains("loggingLog"))
+                PlayerSettings.SetStackTraceLogType(LogType.Log, Get("loggingLog", StackTraceLogType.ScriptOnly));
+            if (Contains("loggingException"))
+                PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("loggingException", StackTraceLogType.ScriptOnly));
 
             switch (buildGroup)
             {
                 case BuildTargetGroup.Android:
                     if (Contains("VersionCode"))
                         PlayerSettings.Android.bundleVersionCode = Get("VersionCode", 1);
-
-                    if (Contains("Android.TargetArchitectures"))
-                        PlayerSettings.Android.targetArchitectures = Get<AndroidArchitecture>("Android.TargetArchitectures");
-                    if (Contains("Android.KeystoreName"))
-                        PlayerSettings.Android.keystoreName = Get("Android.KeystoreName");
-                    if (Contains("Android.KeystorePass"))
-                        PlayerSettings.Android.keystorePass = Get("Android.KeystorePass");
-                    if (Contains("Android.KeyaliasName"))
-                        PlayerSettings.Android.keyaliasName = Get("Android.KeyaliasName");
-                    if (Contains("Android.KeyaliasPass"))
-                        PlayerSettings.Android.keyaliasPass = Get("Android.KeyaliasPass");
-
                     break;
                 case BuildTargetGroup.iOS:
                     if (Contains("VersionCode"))
                         PlayerSettings.iOS.buildNumber = Get("VersionCode");
-                    if (Contains("iOS.HideHomeButton"))
-                        PlayerSettings.iOS.hideHomeButton = Get<bool>("iOS.HideHomeButton");
-                    if (Contains("iOS.ForceHardShadowsOnMetal"))
-                        PlayerSettings.iOS.forceHardShadowsOnMetal = Get<bool>("iOS.ForceHardShadowsOnMetal");
-                    if (Contains("iOS.AllowHTTPDownload"))
-                        PlayerSettings.iOS.allowHTTPDownload = Get<bool>("iOS.AllowHTTPDownload");
-                    if (Contains("iOS.ManualProvisioningProfileID"))
-                        PlayerSettings.iOS.iOSManualProvisioningProfileID = Get("iOS.ManualProvisioningProfileID");
-                    if (Contains("iOS.AppleDeveloperTeamID"))
-                        PlayerSettings.iOS.appleDeveloperTeamID = Get("iOS.AppleDeveloperTeamID");
-                    if (Contains("iOS.AppleEnableAutomaticSigning"))
-                        PlayerSettings.iOS.appleEnableAutomaticSigning = Get<bool>("iOS.AppleEnableAutomaticSigning");
-                    if (Contains("iOS.ManualProvisioningProfileType"))
-                        PlayerSettings.iOS.iOSManualProvisioningProfileType = Get<ProvisioningProfileType>("iOS.ManualProvisioningProfileType");
-
-                    if (Contains("iOS.TargetDevice"))
-                        PlayerSettings.iOS.targetDevice = Get<iOSTargetDevice>("iOS.TargetDevice");
-                    if (Contains("iOS.SdkVersion"))
-                        PlayerSettings.iOS.sdkVersion = Get<iOSSdkVersion>("iOS.SdkVersion");
-                    if (Contains("iOS.TargetOSVersionString"))
-                        PlayerSettings.iOS.targetOSVersionString = Get("iOS.TargetOSVersionString");
-                    if (Contains("ScriptCallOptimization"))
-                        PlayerSettings.iOS.scriptCallOptimization = Get<ScriptCallOptimizationLevel>("ScriptCallOptimization");
-                    if (Contains("iOS.UseOnDemandResources"))
-                        PlayerSettings.iOS.useOnDemandResources = Get<bool>("iOS.UseOnDemandResources");
-                    
                     break;
             }
 
@@ -361,7 +416,7 @@ namespace LWJ.Unity.Editor
         }
 
         [MenuItem("LWJ/OneBuild/Build", priority = 2)]
-        public static void Build()
+        public static void BuildMenu()
         {
             string version;
             configs = LoadConfig(out version);
@@ -388,7 +443,7 @@ namespace LWJ.Unity.Editor
             if (!EditorPrefs.GetBool(typeof(OneBuild).Name + ".startedbuild"))
                 return;
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
-            Buld();
+            Build();
         }
 
         public static void DelayBuild()
@@ -405,12 +460,12 @@ namespace LWJ.Unity.Editor
             {
                 if (!EditorApplication.isCompiling)
                 {
-                    Buld();
+                    Build();
                 }
             };
         }
 
-        public static void Buld()
+        public static void Build()
         {
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
 
@@ -554,7 +609,7 @@ namespace LWJ.Unity.Editor
 
         public static T Get<T>(string name)
         {
-            string obj;
+            string[] obj;
             if (!configs.TryGetValue(name, out obj))
                 throw new Exception("Not Key:" + name);
             return Get<T>(name, default(T));
@@ -562,7 +617,7 @@ namespace LWJ.Unity.Editor
 
         public static T Get<T>(string name, T defaultValue)
         {
-            string obj;
+            string[] obj;
             if (!configs.TryGetValue(name, out obj))
                 return defaultValue;
             if (obj == null)
@@ -570,69 +625,102 @@ namespace LWJ.Unity.Editor
             Type type = typeof(T);
             if (type == typeof(string))
             {
-                if (obj is string)
+                if (obj[0] is string)
                     return (T)(object)obj;
                 return (T)(object)obj.ToString();
             }
             if (type.IsEnum)
             {
-                return (T)ParseEnum(type, (string)obj);
+                return (T)ParseEnum(type, obj[0] as string);
             }
 
             return (T)Convert.ChangeType(obj, type);
         }
-        static Regex tplRegex = new Regex("\\{\\$(.*?)\\}");
+        static Regex tplRegex = new Regex("\\{\\$(.*?)(\\,(.*))?\\}");
         /// <summary>
         /// Template: {$Name}
         /// </summary>
         /// <param name="input"></param>
         /// <param name="func"></param>
         /// <returns></returns>
-        public static string ReplaceTemplate(string input, Func<string, string> func)
+        public static string ReplaceTemplate(string input, Func<string, string, string> func)
         {
             if (func == null)
                 throw new ArgumentNullException("func");
             string ret = tplRegex.Replace(input, (m) =>
              {
                  string name = m.Groups[1].Value;
-                 return func(name);
+                 string format = m.Groups[3].Value;
+                 return func(name, format);
              });
             return ret;
         }
         /// <summary>
-        /// Template: {$Key}
+        /// Template: {$Key,FormatString}
         /// </summary>
         /// <param name="input"></param>
-        public static void ReplaceTemplate(Dictionary<string, string> input)
+        public static void ReplaceTemplate(Dictionary<string, string[]> input)
         {
-            string value;
+            string[] values;
             foreach (var key in input.Keys.ToArray())
             {
-                value = input[key];
-                if (value == null)
+                values = input[key];
+                if (values == null)
                     continue;
-                if (tplRegex.IsMatch(value))
+                for (int i = 0; i < values.Length; i++)
                 {
-                    value = FindReplaceString(input, key, key);
-                    input[key] = value;
+                    string value = values[i];
+
+                    if (tplRegex.IsMatch(value))
+                    {
+                        value = FindReplaceString(input, key, value, key);
+                        values[i] = value;
+                    }
                 }
             }
         }
 
-        static string FindReplaceString(Dictionary<string, string> input, string key, string startKey)
+        static string FindReplaceString(Dictionary<string, string[]> input, string key, string value, string startKey)
         {
-            string value = input[key];
-
-            value = ReplaceTemplate(value, (name) =>
+            value = tplRegex.Replace(value, (m) =>
             {
-                if (input.Comparer.Equals(key, name))
-                    throw new Exception("reference self. key: [" + name + "]");
-                if (input.Comparer.Equals(startKey, name))
-                    throw new Exception("loop reference key1:[" + name + "], key2:[" + key + "]");
-                if (!input.ContainsKey(name))
-                    throw new Exception("not found key: [" + name + "]");
+                string name = m.Groups[1].Value;
+                string format = m.Groups[3].Value;
+                
 
-                return FindReplaceString(input, name, startKey);
+                //value = ReplaceTemplate(value, (name, format) =>
+                //{
+                if (input.Comparer.Equals(key, name))
+                    throw new Exception("reference self. key: [" + name + "], key1:[" + key + "]" + "], key2:[" + startKey + "]");
+                if (input.Comparer.Equals(startKey, name))
+                    throw new Exception("loop reference key1:[" + name + "], key2:[" + startKey + "]");
+                string newValue;
+                if (input.ContainsKey(name))
+                {
+                    newValue = FindReplaceString(input, name, input[name][0], startKey);
+                    if (!string.IsNullOrEmpty(format))
+                    {
+                        newValue = string.Format(format, newValue);
+                    }
+                }
+                else if (GlobalVars.ContainsKey(name))
+                {
+                    object v = GlobalVars[name];
+                    if (v != null && !string.IsNullOrEmpty(format) && v is IFormattable)
+                    {
+                        newValue = ((IFormattable)v).ToString(format, null);
+                    }
+                    else
+                    {
+                        newValue = v.ToString();
+                    }
+
+                }
+                else
+                {
+                    throw new Exception("not found key: [" + name + "]");
+                }
+                return newValue;
             });
             return value;
         }
