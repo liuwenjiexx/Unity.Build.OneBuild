@@ -60,7 +60,7 @@ namespace LWJ.Unity.Editor
             "loggingWarning",
             "loggingLog",
             "loggingException",
-            "BuildOptions.AutoRunPlayer",
+            "BuildOptions"
         };
         public static Dictionary<string, string> append = new Dictionary<string, string>()
         {
@@ -97,7 +97,7 @@ namespace LWJ.Unity.Editor
             DelayBuild();
         }
 
-     
+
         [MenuItem("Build/Update Config (Debug)", priority = 2)]
         public static void UpdateConfigDebug()
         {
@@ -133,7 +133,7 @@ namespace LWJ.Unity.Editor
         }
         public static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
         {
-            var configs = new Dictionary<string, string[]>();
+            var configs = new Dictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
             LastBuildVersion = version;
@@ -255,7 +255,7 @@ namespace LWJ.Unity.Editor
             if (!enumType.IsEnum)
                 throw new Exception("Not Enum Type: " + enumType.FullName);
             if (enumType.IsDefined(typeof(FlagsAttribute), true))
-            {                
+            {
                 return Enum.Parse(enumType, str.Replace(' ', ','));
             }
             else
@@ -264,7 +264,7 @@ namespace LWJ.Unity.Editor
             }
         }
 
-       
+
 
         static MemberInfo FindSetMember(string typeAndMember, string[] args)
         {
@@ -437,7 +437,7 @@ namespace LWJ.Unity.Editor
 
         }
 
-       
+
 
         [DidReloadScripts]
         static void OnReloadScripts()
@@ -491,13 +491,11 @@ namespace LWJ.Unity.Editor
             if (!Directory.Exists(outputDir))
                 Directory.CreateDirectory(outputDir);
 
-            BuildOptions options = BuildOptions.None;
+            BuildOptions options;
 
-            if (Get("BuildOptions.AutoRunPlayer", false))
-                options |= BuildOptions.AutoRunPlayer;
-
+            options = Get<BuildOptions>("BuildOptions", BuildOptions.None);
+            
             BuildPipeline.BuildPlayer(EditorBuildSettings.scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
-
         }
 
 
@@ -629,7 +627,7 @@ namespace LWJ.Unity.Editor
             if (type == typeof(string))
             {
                 if (obj[0] is string)
-                    return (T)(object)obj;
+                    return (T)(object)obj[0];
                 return (T)(object)obj.ToString();
             }
             if (type.IsEnum)
@@ -689,7 +687,7 @@ namespace LWJ.Unity.Editor
             {
                 string name = m.Groups[1].Value;
                 string format = m.Groups[3].Value;
-                
+
 
                 //value = ReplaceTemplate(value, (name, format) =>
                 //{
