@@ -67,6 +67,47 @@ namespace LWJ.Unity.Editor
             { "ScriptingDefineSymbols",";" }
         };
 
+        [MenuItem("Build/Build", priority = 1)]
+        public static void BuildMenu()
+        {
+            string version;
+            configs = LoadConfig(out version);
+            LastBuildVersion = version;
+            UpdateConfig();
+            DelayBuild();
+        }
+        [MenuItem("Build/Update Config", priority = 1)]
+        public static void UpdateConfig1()
+        {
+            StringBuilder sb = new StringBuilder();
+            configs = LoadConfig(null, sb);
+
+            UpdateConfig();
+            Debug.Log("Update Config\n" + sb.ToString());
+        }
+
+        [MenuItem("Build/Build (Debug)", priority = 2)]
+        public static void BuildDebug()
+        {
+            string version;
+            configs = LoadConfigDebug(out version);
+            LastBuildVersion = version;
+            UpdateConfig();
+
+            DelayBuild();
+        }
+
+     
+        [MenuItem("Build/Update Config (Debug)", priority = 2)]
+        public static void UpdateConfigDebug()
+        {
+            string ver;
+            StringBuilder sb = new StringBuilder();
+            configs = LoadConfigDebug(out ver, sb);
+            UpdateConfig();
+            Debug.Log("Update Config\n" + sb.ToString());
+
+        }
 
         public static Dictionary<string, string[]> LoadConfig(out string version, StringBuilder log = null)
         {
@@ -223,26 +264,7 @@ namespace LWJ.Unity.Editor
             }
         }
 
-        [MenuItem("LWJ/OneBuild/Update Config", priority = 1)]
-        public static void UpdateConfig1()
-        {
-            StringBuilder sb = new StringBuilder();
-            configs = LoadConfig(null, sb);
-
-            UpdateConfig();
-            Debug.Log("Update Config\n" + sb.ToString());
-
-        }
-        [MenuItem("LWJ/OneBuild/ Update Config (Debug)", priority = 1)]
-        public static void UpdateConfigDebug()
-        {
-            string ver;
-            StringBuilder sb = new StringBuilder();
-            configs = LoadConfigDebug(out ver, sb);
-            UpdateConfig();
-            Debug.Log("Update Config\n" + sb.ToString());
-
-        }
+       
 
         static MemberInfo FindSetMember(string typeAndMember, string[] args)
         {
@@ -415,26 +437,7 @@ namespace LWJ.Unity.Editor
 
         }
 
-        [MenuItem("LWJ/OneBuild/Build", priority = 2)]
-        public static void BuildMenu()
-        {
-            string version;
-            configs = LoadConfig(out version);
-            LastBuildVersion = version;
-            UpdateConfig();
-            DelayBuild();
-        }
-
-        [MenuItem("LWJ/OneBuild/Build (Debug)", priority = 2)]
-        public static void BuildDebug()
-        {
-            string version;
-            configs = LoadConfigDebug(out version);
-            LastBuildVersion = version;
-            UpdateConfig();
-
-            DelayBuild();
-        }
+       
 
         [DidReloadScripts]
         static void OnReloadScripts()
