@@ -56,7 +56,10 @@ namespace LWJ.Unity.Editor
             "loggingWarning",
             "loggingLog",
             "loggingException",
-            "BuildOptions"
+            "BuildOptions",
+            "build.scenes",
+            "clearLog",
+            "build.assets",
         };
         public static Dictionary<string, string> append = new Dictionary<string, string>()
         {
@@ -478,6 +481,11 @@ namespace LWJ.Unity.Editor
 
         private static void _Build()
         {
+            if (Get("ClearLog", false))
+            {
+                ClearLog();
+            }
+
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
 
             if (EditorApplication.isPlaying)
@@ -490,8 +498,8 @@ namespace LWJ.Unity.Editor
                 configs = LoadConfig(LastBuildVersion);
             }
             //start build
-            var buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-
+            BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
             string outputDir = Get("Output.Dir");
             string fileName = Get("Output.FileName", string.Empty);
             string outputPath = Path.Combine(outputDir, fileName);
@@ -503,11 +511,69 @@ namespace LWJ.Unity.Editor
 
             options = Get<BuildOptions>("BuildOptions", BuildOptions.None);
 
-            BuildPipeline.BuildPlayer(EditorBuildSettings.scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
+
+
+            if (Contains("Build.Assets"))
+            {
+                BuildAssets();
+                return;
+            }
+
+            string[] scenes = null;
+
+            if (Contains("Build.Scenes"))
+            {
+                string tmp = Get("Build.Scenes");
+                tmp = tmp.Trim();
+                if (!string.IsNullOrEmpty(tmp))
+                    scenes = tmp.Split(',');
+            }
+
+            if (scenes == null || scenes.Length == 0)
+            {
+                scenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
+            }
+
+            BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, options);
         }
 
 
+        static void BuildAssets()
+        {
+            BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+            string outputDir = Get("Output.Dir");
+            string[] tmp = Get<string[]>("Build.Assets");
 
+            AssetBundleBuild[] assetBundleBuilds = new AssetBundleBuild[tmp.Length];
+            for(int i = 0; i < assetBundleBuilds.Length; i++)
+            {
+                AssetBundleBuild assetBundleBuild = new AssetBundleBuild();
+                assetBundleBuild.
+            }
+
+            BuildPipeline.BuildAssetBundles(outputDir,);
+        }
+
+
+        public static void ClearLog()
+        {
+            if (Application.isEditor)
+            {
+                try
+                {
+                    var assembly = Assembly.GetAssembly(typeof(UnityEditor.Editor));
+                    var type = assembly.GetType("UnityEditor.LogEntries");
+                    var method = type.GetMethod("Clear");
+                    method.Invoke(new object(), null);
+                }
+                catch { }
+            }
+            else
+            {
+                Debug.ClearDeveloperConsole();
+            }
+        }
 
 
         [PostProcessBuild(0)]
@@ -626,24 +692,27 @@ namespace LWJ.Unity.Editor
 
         public static T Get<T>(string name, T defaultValue)
         {
-            string[] obj;
-            if (!configs.TryGetValue(name, out obj))
+            string[] v;
+            if (!configs.TryGetValue(name, out v))
                 return defaultValue;
-            if (obj == null)
+            if (v == null)
                 return default(T);
             Type type = typeof(T);
+            if (type == typeof(string[]))
+                return (T)(object)v;
+
             if (type == typeof(string))
             {
-                if (obj[0] is string)
-                    return (T)(object)obj[0];
-                return (T)(object)obj.ToString();
+                if (v[0] is string)
+                    return (T)(object)v[0];
+                return (T)(object)v.ToString();
             }
             if (type.IsEnum)
             {
-                return (T)ParseEnum(type, obj[0] as string);
+                return (T)ParseEnum(type, v[0] as string);
             }
 
-            return (T)Convert.ChangeType(obj, type);
+            return (T)Convert.ChangeType(v[0], type);
         }
         static Regex tplRegex = new Regex("\\{\\$(.*?)(\\,(.*))?\\}");
         /// <summary>
