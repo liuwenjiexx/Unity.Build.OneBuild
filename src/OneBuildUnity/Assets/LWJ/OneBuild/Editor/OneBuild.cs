@@ -1,19 +1,15 @@
-﻿using System.IO;
-using UnityEditor;
-using UnityEngine;
+﻿using System;
 using System.Collections.Generic;
-using System;
-using UnityEditor.iOS.Xcode.Custom;
-using UnityEditor.Callbacks;
+using System.IO;
 using System.Linq;
-using System.Xml;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using UnityEditor.Purchasing;
-using UnityEditor.CrashReporting;
-using UnityEditor.Advertisements;
-using UnityEditor.Analytics;
-using System.Reflection;
+using System.Xml;
+using UnityEditor;
+using UnityEditor.Callbacks;
+using UnityEditor.iOS.Xcode.Custom;
+using UnityEngine;
 
 
 namespace LWJ.Unity.Editor
@@ -70,73 +66,77 @@ namespace LWJ.Unity.Editor
         [MenuItem("Build/Build", priority = 1)]
         public static void BuildMenu()
         {
-            string version;
-            configs = LoadConfig(out version);
-            LastBuildVersion = version;
-            UpdateConfig();
-            DelayBuild();
+            string version = GetVersion(null);
+            Build(version);
+
         }
         [MenuItem("Build/Update Config", priority = 1)]
         public static void UpdateConfig1()
         {
-            StringBuilder sb = new StringBuilder();
-            configs = LoadConfig(null, sb);
-
-            UpdateConfig();
-            Debug.Log("Update Config\n" + sb.ToString());
+            string version = GetVersion(null);
+            UpdateConfig(version, true);
         }
 
         [MenuItem("Build/Build (Debug)", priority = 2)]
         public static void BuildDebug()
         {
-            string version;
-            configs = LoadConfigDebug(out version);
-            LastBuildVersion = version;
-            UpdateConfig();
-
-            DelayBuild();
+            string version = GetVersion("debug");
+            Build(version);
         }
 
 
         [MenuItem("Build/Update Config (Debug)", priority = 2)]
         public static void UpdateConfigDebug()
         {
-            string ver;
-            StringBuilder sb = new StringBuilder();
-            configs = LoadConfigDebug(out ver, sb);
-            UpdateConfig();
-            Debug.Log("Update Config\n" + sb.ToString());
-
+            string version = GetVersion("debug");
+            UpdateConfig(version, true);
         }
 
-        public static Dictionary<string, string[]> LoadConfig(out string version, StringBuilder log = null)
+        public static void Build(string version)
+        {
+            UpdateConfig(version, false);
+            LastBuildVersion = version;
+            DelayBuild();
+        }
+
+        public static string GetVersion(string version)
         {
             string currentPath = VersionPath;
-            version = "";
+            string ver = "";
             if (File.Exists(currentPath))
             {
-                version = File.ReadAllText(currentPath);
+                ver = File.ReadAllText(currentPath);
+                ver = ver.Trim();
             }
-            return LoadConfig(version, log);
+
+            if (!string.IsNullOrEmpty(version))
+            {
+                version = version.Trim();
+                if (string.IsNullOrEmpty(ver))
+                {
+                    ver = version;
+                }
+                else
+                {
+                    if (!ver.EndsWith(","))
+                    {
+                        ver += ",";
+                    }
+                    ver += version;
+                }
+            }
+
+            return ver;
         }
 
-        public static Dictionary<string, string[]> LoadConfigDebug(out string version, StringBuilder log = null)
-        {
-            string currentPath = VersionPath;
-            version = "";
-            if (File.Exists(currentPath))
-            {
-                version = File.ReadAllText(currentPath);
-            }
-            version += ",debug";
-            return LoadConfig(version, log);
-        }
+
+
+
         public static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
         {
             var configs = new Dictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
-            LastBuildVersion = version;
 
             GlobalVars = new Dictionary<string, object>()
             {
@@ -148,16 +148,16 @@ namespace LWJ.Unity.Editor
             {
                 foreach (var part in version.Split(',', '\r', '\n'))
                 {
-                    if (!string.IsNullOrEmpty(part))
+                    string ver = part.Trim();
+                    if (!string.IsNullOrEmpty(ver))
                     {
-                        matchs[part.Trim().ToLower()] = 10;
+                        matchs[ver.ToLower()] = 10;
                     }
                 }
             }
 
             Dictionary<string, int> files = new Dictionary<string, int>();
 
-            //matchs.Add("build", 0);
             matchs.Add(EditorUserBuildSettings.selectedBuildTargetGroup.ToString().ToLower(), 1);
 
             foreach (var file in Directory.GetFiles(ConfigDir))
@@ -389,8 +389,14 @@ namespace LWJ.Unity.Editor
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(o => o.GetTypes()).Where(o => o.FullName == typeName || (o.IsNested && o.FullName.Replace('+', '.') == typeName)).FirstOrDefault();
         }
 
-        public static void UpdateConfig()
+
+
+        public static void UpdateConfig(string version, bool log)
         {
+            StringBuilder sb = null;
+            if (log)
+                sb = new StringBuilder();
+            configs = LoadConfig(version, sb);
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
@@ -430,6 +436,8 @@ namespace LWJ.Unity.Editor
                         PlayerSettings.iOS.buildNumber = Get("VersionCode");
                     break;
             }
+            if (sb != null)
+                Debug.Log("Update Config\n" + sb.ToString());
 
             AssetDatabase.SaveAssets();
 
@@ -446,7 +454,7 @@ namespace LWJ.Unity.Editor
             if (!EditorPrefs.GetBool(typeof(OneBuild).Name + ".startedbuild"))
                 return;
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
-            Build();
+            _Build();
         }
 
         public static void DelayBuild()
@@ -463,12 +471,12 @@ namespace LWJ.Unity.Editor
             {
                 if (!EditorApplication.isCompiling)
                 {
-                    Build();
+                    _Build();
                 }
             };
         }
 
-        public static void Build()
+        private static void _Build()
         {
             EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
 
@@ -494,7 +502,7 @@ namespace LWJ.Unity.Editor
             BuildOptions options;
 
             options = Get<BuildOptions>("BuildOptions", BuildOptions.None);
-            
+
             BuildPipeline.BuildPlayer(EditorBuildSettings.scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
         }
 
