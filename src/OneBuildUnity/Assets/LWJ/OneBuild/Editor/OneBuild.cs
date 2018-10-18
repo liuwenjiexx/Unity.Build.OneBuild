@@ -157,7 +157,7 @@ namespace LWJ.Unity.Editor
 
             Dictionary<string, int> files = new Dictionary<string, int>();
 
-            matchs.Add("app", 0);
+            //matchs.Add("build", 0);
             matchs.Add(EditorUserBuildSettings.selectedBuildTargetGroup.ToString().ToLower(), 1);
 
             foreach (var file in Directory.GetFiles(ConfigDir))
