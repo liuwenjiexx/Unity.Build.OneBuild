@@ -56,9 +56,10 @@ namespace LWJ.Unity.Editor
             "loggingWarning",
             "loggingLog",
             "loggingException",
-            "BuildOptions",
-            "build.scenes",
             "clearLog",
+            "build.BuildOptions",
+            "build.BuildAssetBundleOptions",
+            "build.scenes",
             "build.assets",
         };
         public static Dictionary<string, string> append = new Dictionary<string, string>()
@@ -71,16 +72,22 @@ namespace LWJ.Unity.Editor
         {
             string version = GetVersion(null);
             Build(version);
-
         }
-        [MenuItem("Build/Update Config", priority = 1)]
+        [MenuItem("Build/Update Config", priority = 2)]
         public static void UpdateConfig1()
         {
             string version = GetVersion(null);
             UpdateConfig(version, true);
         }
 
-        [MenuItem("Build/Build (Debug)", priority = 2)]
+        [MenuItem("Build/Build Assets", priority = 3)]
+        public static void BuildAssetsMenu()
+        {
+            string version = GetVersion("assets");
+            Build(version);
+        }
+
+        [MenuItem("Build/Build (Debug)", priority = 20)]
         public static void BuildDebug()
         {
             string version = GetVersion("debug");
@@ -88,7 +95,7 @@ namespace LWJ.Unity.Editor
         }
 
 
-        [MenuItem("Build/Update Config (Debug)", priority = 2)]
+        [MenuItem("Build/Update Config (Debug)", priority = 21)]
         public static void UpdateConfigDebug()
         {
             string version = GetVersion("debug");
@@ -509,7 +516,7 @@ namespace LWJ.Unity.Editor
 
             BuildOptions options;
 
-            options = Get<BuildOptions>("BuildOptions", BuildOptions.None);
+            options = Get<BuildOptions>("Build.BuildOptions", BuildOptions.None);
 
 
 
@@ -546,13 +553,21 @@ namespace LWJ.Unity.Editor
             string[] tmp = Get<string[]>("Build.Assets");
 
             AssetBundleBuild[] assetBundleBuilds = new AssetBundleBuild[tmp.Length];
-            for(int i = 0; i < assetBundleBuilds.Length; i++)
+            for (int i = 0; i < assetBundleBuilds.Length; i++)
             {
+                string assetPath = tmp[i];
                 AssetBundleBuild assetBundleBuild = new AssetBundleBuild();
-                assetBundleBuild.
+                assetBundleBuild.assetNames = new string[] { assetPath };
+                assetBundleBuild.assetBundleName = Path.GetFileNameWithoutExtension(assetPath);
+
+                assetBundleBuilds[i] = assetBundleBuild;
             }
 
-            BuildPipeline.BuildAssetBundles(outputDir,);
+
+            BuildAssetBundleOptions assetBundleOptions = Get<BuildAssetBundleOptions>("Build.BuildAssetBundleOptions", BuildAssetBundleOptions.None);
+            BuildPipeline.BuildAssetBundles(outputDir, assetBundleBuilds, assetBundleOptions, buildTarget);
+
+            Debug.Log("Build Assets Complete.");
         }
 
 
