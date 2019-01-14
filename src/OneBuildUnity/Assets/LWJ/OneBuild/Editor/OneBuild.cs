@@ -513,6 +513,21 @@ namespace LWJ.Unity.Editor
 
             if (!Directory.Exists(outputDir))
                 Directory.CreateDirectory(outputDir);
+            else
+            {
+
+                //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
+                //{
+                //    Directory.Delete(dir, false);
+                //}
+                 
+            }
+            foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
 
             BuildOptions options;
 
@@ -541,7 +556,16 @@ namespace LWJ.Unity.Editor
                 scenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
             }
 
-            BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, options);
+            try
+            {
+                var report = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, options);
+              
+                EditorUtility.RevealInFinder(outputPath);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
         }
 
 
@@ -708,26 +732,37 @@ namespace LWJ.Unity.Editor
         public static T Get<T>(string name, T defaultValue)
         {
             string[] v;
-            if (!configs.TryGetValue(name, out v))
+            try
+            {
+                if (!configs.TryGetValue(name, out v))
+                    return defaultValue;
+
+                if (v == null)
+                    return default(T);
+                Type type = typeof(T);
+                if (type == typeof(string[]))
+                    return (T)(object)v;
+
+                if (type == typeof(string))
+                {
+                    if (v[0] is string)
+                        return (T)(object)v[0];
+                    return (T)(object)v.ToString();
+                }
+                if (type.IsEnum)
+                {
+                    return (T)ParseEnum(type, v[0] as string);
+                }
+
+                return (T)Convert.ChangeType(v[0], type);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Debug.LogError("config error name:" + name);
                 return defaultValue;
-            if (v == null)
-                return default(T);
-            Type type = typeof(T);
-            if (type == typeof(string[]))
-                return (T)(object)v;
-
-            if (type == typeof(string))
-            {
-                if (v[0] is string)
-                    return (T)(object)v[0];
-                return (T)(object)v.ToString();
-            }
-            if (type.IsEnum)
-            {
-                return (T)ParseEnum(type, v[0] as string);
             }
 
-            return (T)Convert.ChangeType(v[0], type);
         }
         static Regex tplRegex = new Regex("\\{\\$(.*?)(\\,(.*))?\\}");
         /// <summary>
