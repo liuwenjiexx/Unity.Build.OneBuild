@@ -41,24 +41,39 @@ Application.dataPath + "/Raw/";
 
     public void Menu_Click(string sceneName)
     {
+        if (sceneName == "main")
+        {
 
-     StartCoroutine(   StartLoadScene(sceneName, steamAssets.isOn));
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        }
+        else
+        {
+            CoroutineHelp.Instance.StartCoroutine(StartLoadScene(sceneName, steamAssets.isOn));
+        }
     }
+
+
+
 
     IEnumerator StartLoadScene(string sceneName, bool useSteamAssets)
     {
         if (useSteamAssets)
         {
-            string url = Utils.StreamingAssetsUrl + sceneName + ".unity3d";
-            Debug.Log("load url:" + url);
+            string url = Utils.StreamingAssetsUrl + sceneName;
+            Debug.Log("load assetbundle\n" + url);
             WWW www = new WWW(url);
             yield return www;
             if (!string.IsNullOrEmpty(www.error))
             {
-                Debug.LogError("load scene error:" + url);
+                Debug.LogError("load scene error\n" + url);
                 yield break;
             }
             AssetBundle assetBundle = www.assetBundle;
+            if (!assetBundle)
+            {
+                Debug.LogError("asset bundle null\n" + url);
+                yield break;
+            }
             SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             assetBundle.Unload(false);
         }

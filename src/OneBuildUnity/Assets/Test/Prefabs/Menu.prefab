@@ -703,6 +703,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1787c9cf8ef39314b9149fcc597e032c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  steamAssets: {fileID: 114188672508068556}
 --- !u!114 &114921070216425748
 MonoBehaviour:
   m_ObjectHideFlags: 1
