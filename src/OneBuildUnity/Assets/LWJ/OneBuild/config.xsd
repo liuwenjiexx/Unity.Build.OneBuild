@@ -5,12 +5,25 @@
     elementFormDefault="qualified"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
 >
+
   <xs:element name="config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="companyName"/>
+          <xs:element name="AndroidArchitecture" type="AndroidArchitecture" />
+        </xs:choice>  
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="config1">
     <xs:complexType>
       <xs:sequence>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="items"/>
           <xs:element  name="Item" type="any_item" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:any namespace="##other" processContents="lax"/>
         </xs:choice>
       </xs:sequence>
     </xs:complexType>
@@ -18,12 +31,12 @@
 
   <xs:group name="items">
     <xs:choice>
-      <xs:element name="CompanyName"/>
-      <xs:element name="ProductName"/>
-      <xs:element name="ApplicationIdentifier"/>
-      <xs:element name="Channel"/>
-      <xs:element name="Version"/>
-      <xs:element name="VersionCode"/>
+      <xs:element name="companyName"/>
+      <xs:element name="productName"/>
+      <xs:element name="applicationIdentifier"/>
+      <xs:element name="channel"/>
+      <xs:element name="version"/>
+      <xs:element name="versionCode"/>
       <!--Compile-->
       <xs:element name="ScriptingRuntimeVersion"/>
       <xs:element name="ScriptingBackend" type="ScriptingImplementation"/>
@@ -59,7 +72,7 @@
       <xs:element name="LoggingException" type="StackTraceLogType"/>
 
       <xs:element name="DefaultOrientation" type="UIOrientation"/>
-      
+
 
       <!--Android-->
 
@@ -68,10 +81,11 @@
       <xs:element name="Android.KeyaliasName"/>
       <xs:element name="Android.KeyaliasPass"/>
       <xs:element name="Android.TargetArchitectures" type="AndroidArchitecture"/>
+      <xs:element name="AndroidArchitecture" type="AndroidArchitecture" />
       <!--Android-->
 
       <!--iOS-->
-      
+
       <xs:element name="iOS.HideHomeButton" type="xs:boolean"/>
       <!--<xs:element name="iOS.AppInBackgroundBehavior"/>
       <xs:element name="iOS.BackgroundModes"/>-->
@@ -151,6 +165,7 @@
       <xs:element name="Output.FileName" type="xs:string" />
 
     </xs:choice>
+
   </xs:group>
 
   <xs:complexType  name="any_item">
@@ -250,10 +265,10 @@
       <xs:enumeration value="AutoRotation" />
     </xs:restriction>
   </xs:simpleType>
-  
+
 
   <!-- iOS Enum-->
-  <xs:simpleType name="iOS.TargetDevice" >
+  <xs:simpleType name="iOSTargetDevice" >
     <xs:restriction base="xs:string">
       <xs:enumeration value="iPhoneOnly" />
       <xs:enumeration value="iPadOnly" />
@@ -261,8 +276,8 @@
     </xs:restriction>
   </xs:simpleType>
 
- 
-  <xs:simpleType name="iOS.SdkVersion" >
+
+  <xs:simpleType name="iOSSdkVersion" >
     <xs:restriction base="xs:string">
       <xs:enumeration value="DeviceSDK" />
       <xs:enumeration value="SimulatorSDK" />
