@@ -1,12 +1,12 @@
-# UnityOneBuild
+ï»¿# UnityOneBuild
 ---
 Unity3D One Key Config
 
-½«¶à¸öÅäÖÃÎÄ¼ş¸ù¾İÎÄ¼şÓÅÏÈ¼¶ºÏ²¢ÎªÒ»¸öÅäÖÃ
+å°†å¤šä¸ªé…ç½®æ–‡ä»¶æ ¹æ®æ–‡ä»¶ä¼˜å…ˆçº§åˆå¹¶ä¸ºä¸€ä¸ªé…ç½®
 
 
 
-### ÅäÖÃÑùÀı
+### é…ç½®æ ·ä¾‹
 
 PlayerSettings.productName
 ``` xml
@@ -21,15 +21,15 @@ PlayerSettings.SetScriptingBackend
   </scriptingBackend>
 ```
 
-### ÎÄ¼şÃû¸ñÊ½
-##### ¹Ø¼ü×ÖÓÅÏÈ¼¶Ë³Ğò
-* Æ½Ì¨£ºandroid£¬ios
-* ¿ª·¢°æ£ºdebug
+### æ–‡ä»¶åæ ¼å¼
+##### å…³é”®å­—ä¼˜å…ˆçº§é¡ºåº
+* å¹³å°ï¼šandroidï¼Œios
+* å¼€å‘ç‰ˆï¼šdebug
 
-build.config (·¢²¼°æ)
-build.debug.config (¿ª·¢°æ)
-build.android.config (Android·¢²¼°æ)
-build.android.debug.config (Android¿ª·¢°æ)
+build.config (å‘å¸ƒç‰ˆ)
+build.debug.config (å¼€å‘ç‰ˆ)
+build.android.config (Androidå‘å¸ƒç‰ˆ)
+build.android.debug.config (Androidå¼€å‘ç‰ˆ)
 
 
 
