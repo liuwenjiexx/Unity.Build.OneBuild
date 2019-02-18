@@ -6,10 +6,10 @@ Unity3D One Key Config
 
 
 
-###配置样例
+### 配置样例
 
 PlayerSettings.productName
-```
+``` xml
 <companyName>MyCompanyName</companyName>
 ```
   
@@ -21,8 +21,8 @@ PlayerSettings.SetScriptingBackend
   </scriptingBackend>
 ```
 
-###文件名格式
-#####关键字优先级顺序
+### 文件名格式
+##### 关键字优先级顺序
 * 平台：android，ios
 * 开发版：debug
 
