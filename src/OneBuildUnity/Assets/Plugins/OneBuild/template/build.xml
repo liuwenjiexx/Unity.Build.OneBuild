@@ -7,7 +7,7 @@
   <companyName>{CompanyName}</companyName>
   <applicationIdentifier >{com.xxx.xxx}</applicationIdentifier>
   <version>1.0.0</version>
-  <output.dir>Build</output.dir>
+  <output.dir>Build/{$BuildTargetGroup}</output.dir>
   <scriptingBackend>
     <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
     <ScriptingImplementation>IL2CPP</ScriptingImplementation>
@@ -16,8 +16,8 @@
     <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
     <Il2CppCompilerConfiguration>Release</Il2CppCompilerConfiguration>
   </il2CppCompilerConfiguration>
-  <Advertisements.AdvertisementSettings.testMode>true</Advertisements.AdvertisementSettings.testMode>
-  <Analytics.AnalyticsSettings.testMode>true</Analytics.AnalyticsSettings.testMode>
+  <Advertisements.AdvertisementSettings.testMode>false</Advertisements.AdvertisementSettings.testMode>
+  <Analytics.AnalyticsSettings.testMode>false</Analytics.AnalyticsSettings.testMode>
   <architecture>
     <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
     <architecture>2</architecture>
