@@ -12,7 +12,7 @@ using UnityEditor.iOS.Xcode.Custom;
 using UnityEngine;
 
 
-namespace LWJ.Unity.Editor
+namespace Unity.Editor
 {
 
     public static class OneBuild
@@ -23,13 +23,42 @@ namespace LWJ.Unity.Editor
         static Dictionary<string, string[]> configs;
 
         public static string VersionFileName = "version.txt";
+        private static string KeyPrefix = "buildplayer.";
+        public static string BuildOutputPathKey = KeyPrefix + "outputpath";
+        public static string BuildScenesKey = KeyPrefix + "scenes";
+        public static string BuildOptionsKey = KeyPrefix + "options";
 
+        public static string OutputPath
+        {
+            get { return EditorPrefs.GetString(BuildOutputPathKey, null); }
+            set { EditorPrefs.SetString(BuildOutputPathKey, value); }
+        }
+        public static string[] Scenes
+        {
+            get
+            {
+                var str = EditorPrefs.GetString(BuildScenesKey, null);
+                if (string.IsNullOrEmpty(str))
+                    return new string[0];
+                return str.Split(',');
+            }
+            set { EditorPrefs.SetString(BuildScenesKey, value == null ? string.Empty : string.Join(",", value)); }
+        }
+        public static BuildOptions Options
+        {
+            get
+            {
+                var n = EditorPrefs.GetInt(BuildOptionsKey, (int)BuildOptions.None);
+                return (BuildOptions)n;
+            }
+            set { EditorPrefs.SetInt(BuildOptionsKey, (int)value); }
+        }
         static string VersionPath
         {
             get { return ConfigDir + "/version.txt"; }
         }
         private const string LastBuildVersionKey = "OneBuild.LastBuildVersion";
-        public static string LastBuildVersion
+        public static string BuildVersion
         {
             get { return PlayerPrefs.GetString(LastBuildVersionKey, string.Empty); }
             set
@@ -104,10 +133,13 @@ namespace LWJ.Unity.Editor
 
         public static void Build(string version)
         {
-            UpdateConfig(version, false);
-            LastBuildVersion = version;
-            DelayBuild();
+            BuildVersion = version;
+
+            BuildPlayer();
         }
+
+
+
 
         public static string GetVersion(string version)
         {
@@ -449,99 +481,15 @@ namespace LWJ.Unity.Editor
             if (sb != null)
                 Debug.Log("Update Config\n" + sb.ToString());
 
-            AssetDatabase.SaveAssets();
 
-            AssetDatabase.Refresh();
-
-        }
-
-
-
-        [DidReloadScripts]
-        static void OnReloadScripts()
-        {
-
-            if (!EditorPrefs.GetBool(typeof(OneBuild).Name + ".startedbuild"))
-                return;
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
-            _Build();
-        }
-
-        public static void DelayBuild()
-        {
-            if (EditorApplication.isPlaying)
-            {
-                Debug.LogError("IsPlaying");
-                return;
-            }
-
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", true);
-
-            EditorApplication.delayCall += () =>
-            {
-                if (!EditorApplication.isCompiling)
-                {
-                    _Build();
-                }
-            };
-        }
-
-        private static void _Build()
-        {
-            if (Get("ClearLog", false))
-            {
-                ClearLog();
-            }
-
-            EditorPrefs.SetBool(typeof(OneBuild).Name + ".startedbuild", false);
-
-            if (EditorApplication.isPlaying)
-            {
-                Debug.LogError("IsPlaying");
-                return;
-            }
-            if (configs == null)
-            {
-                configs = LoadConfig(LastBuildVersion);
-            }
-            //start build
-            BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
             string outputDir = Get("Output.Dir");
             string fileName = Get("Output.FileName", string.Empty);
             string outputPath = Path.Combine(outputDir, fileName);
-
-            if (!Directory.Exists(outputDir))
-                Directory.CreateDirectory(outputDir);
-            else
-            {
-
-                //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
-                //{
-                //    Directory.Delete(dir, false);
-                //}
-                 
-            }
-            foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
-            {
-                File.SetAttributes(file, FileAttributes.Normal);
-                File.Delete(file);
-            }
-
-
             BuildOptions options;
+            string[] scenes = null;
+
 
             options = Get<BuildOptions>("Build.BuildOptions", BuildOptions.None);
-
-
-
-            if (Contains("Build.Assets"))
-            {
-                BuildAssets();
-                return;
-            }
-
-            string[] scenes = null;
 
             if (Contains("Build.Scenes"))
             {
@@ -556,20 +504,25 @@ namespace LWJ.Unity.Editor
                 scenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
             }
 
-            try
+
+            Scenes = scenes;
+            OutputPath = outputPath;
+            Options = options;
+
+
+            if (Get("ClearLog", false))
             {
-                var report = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, options);
-              
-                EditorUtility.RevealInFinder(outputPath);
+                ClearLog();
             }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
+
+            AssetDatabase.SaveAssets();
+
+            AssetDatabase.Refresh();
+
         }
 
-
-        static void BuildAssets()
+          
+        static void BuildAssetBundles()
         {
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
             BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
@@ -619,7 +572,7 @@ namespace LWJ.Unity.Editor
         public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
         {
             var sb = new StringBuilder();
-            configs = LoadConfig(LastBuildVersion, sb);
+            configs = LoadConfig(BuildVersion, sb);
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
 
@@ -897,5 +850,150 @@ namespace LWJ.Unity.Editor
         }
 
 
+        static void BuildPlayer()
+        {
+            var task = new EditorTask();
+            var attrType = typeof(PreProcessBuildAttribute);
+            Regex preProcessBuildRegex = new Regex("^PreProcessBuild(?:(_?)([0-9]+))?.*");
+            foreach (var mInfo in AppDomain.CurrentDomain
+                .GetAssemblies()
+                .SelectMany(o => o.GetTypes())
+                .SelectMany(o => o.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+                .Where(o => o.IsDefined(attrType, false) || preProcessBuildRegex.IsMatch(o.Name))
+                .OrderBy(o =>
+                {
+                    int order = 0;
+                    if (o.IsDefined(attrType, false))
+                    {
+                        order = (o.GetCustomAttributes(typeof(PreProcessBuildAttribute), false).First() as PreProcessBuildAttribute).CallbackOrder;
+                    }
+                    else
+                    {
+                        var m = preProcessBuildRegex.Match(o.Name);
+                        if (m.Success && !string.IsNullOrEmpty(m.Groups[2].Value))
+                        {
+                            int n;
+                            if (int.TryParse(m.Groups[2].Value.Replace('_', '-'), out n))
+                            {
+                                if (m.Groups[1].Value == "_")
+                                    n = -n;
+                                order = n;
+                            }
+                        }
+                    }
+                    Debug.Log(o.Name);
+                    return order;
+                }
+                ))
+            {
+                if (!mInfo.IsStatic)
+                    throw new Exception(string.Format("{0}  method:{1}  only static", attrType.Name, mInfo.Name));
+
+                var ps = mInfo.GetParameters();
+                if (ps.Length != 0)
+                    throw new Exception(string.Format("{0}  method:{1}  only empty parameter", attrType.Name, mInfo.Name));
+
+                task.Add((Action)Delegate.CreateDelegate(typeof(Action), mInfo));
+            }
+
+            task.Run();
+        }
+
+
+        #region PreProcessBuild
+
+        [PreProcessBuild(-1000)]
+        static void Config()
+        {
+            UpdateConfig(BuildVersion, false);
+        }
+
+        [PreProcessBuild(-999)]
+        static void ClearBuild()
+        {
+            if (configs == null)
+            {
+                configs = LoadConfig(BuildVersion);
+            }
+            BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+            string outputDir = Get("Output.Dir");
+            string fileName = Get("Output.FileName", string.Empty);
+            string outputPath = Path.Combine(outputDir, fileName);
+
+            if (!Directory.Exists(outputDir))
+                Directory.CreateDirectory(outputDir);
+            else
+            {
+
+                //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
+                //{
+                //    Directory.Delete(dir, false);
+                //}
+
+            }
+            foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+        }
+
+        [PreProcessBuild(1)]
+        static void Run()
+        {
+            if (configs == null)
+            {
+                configs = LoadConfig(BuildVersion);
+            }
+
+            if (Contains("Build.Assets"))
+            {
+                BuildAssetBundles();
+                return;
+            }
+
+            string outputPath = OutputPath;
+            string[] scenes = Scenes;
+            BuildOptions options = Options;
+            //if (!Directory.Exists(outputPath))
+            //    Directory.CreateDirectory(outputPath);
+
+            if (scenes == null || scenes.Length == 0)
+                throw new Exception("build player scenes empty");
+
+            //if (Directory.Exists(Path.GetDirectoryName(outputPath)))
+            //    Directory.Delete(Path.GetDirectoryName(outputPath), true);
+
+            var report = BuildPipeline.BuildPlayer(scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
+
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new Exception("" + report.summary.result);
+            EditorUtility.RevealInFinder(outputPath);
+        }
+
+        #endregion
+
     }
+
+
+    public class PreProcessBuildAttribute : CallbackOrderAttribute
+    {
+        public PreProcessBuildAttribute()
+        {
+        }
+
+        public PreProcessBuildAttribute(int callbackOrder)
+        {
+            base.m_CallbackOrder = callbackOrder;
+        }
+
+        public int CallbackOrder
+        {
+            get { return m_CallbackOrder; }
+        }
+
+    }
+
+
 }
