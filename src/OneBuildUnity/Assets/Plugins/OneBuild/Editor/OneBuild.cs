@@ -12,7 +12,7 @@ using UnityEditor.iOS.Xcode.Custom;
 using UnityEngine;
 
 
-namespace Unity.Editor
+namespace UnityEditor.Build
 {
 
     public static class OneBuild
@@ -27,6 +27,7 @@ namespace Unity.Editor
         public static string BuildOutputPathKey = KeyPrefix + "outputpath";
         public static string BuildScenesKey = KeyPrefix + "scenes";
         public static string BuildOptionsKey = KeyPrefix + "options";
+        public static string BuildShowFolderKey = KeyPrefix + "showfolder";
 
         public static string OutputPath
         {
@@ -53,6 +54,13 @@ namespace Unity.Editor
             }
             set { EditorPrefs.SetInt(BuildOptionsKey, (int)value); }
         }
+        public static bool ShowFolder
+        {
+            get { return EditorPrefs.GetBool(BuildShowFolderKey, false); }
+            set { EditorPrefs.SetBool(BuildShowFolderKey, value); }
+        }
+
+
         static string VersionPath
         {
             get { return ConfigDir + "/version.txt"; }
@@ -72,7 +80,7 @@ namespace Unity.Editor
             get { return configs; }
         }
 
-        public static Dictionary<string, object> GlobalVars;
+        public static Dictionary<string, object> GlobalVariables;
 
         public static HashSet<string> CustomMembers = new HashSet<string>()
         {
@@ -90,7 +98,27 @@ namespace Unity.Editor
             "build.BuildAssetBundleOptions",
             "build.scenes",
             "build.assets",
+            "build.showfolder",
         };
+
+
+        //public static string version;
+        //public static string versionCode;
+        //    "output.dir",
+        //    "output.filename",
+        //    "loggingError",
+        //    "loggingAssert",
+        //    "loggingWarning",
+        //    "loggingLog",
+        //    "loggingException",
+        //    "clearLog",
+        //    "build.BuildOptions",
+        //    "build.BuildAssetBundleOptions",
+        //    "build.scenes",
+        //    "build.assets", 
+
+
+
         public static Dictionary<string, string> append = new Dictionary<string, string>()
         {
             { "ScriptingDefineSymbols",";" }
@@ -99,28 +127,24 @@ namespace Unity.Editor
         [MenuItem("Build/Build", priority = 1)]
         public static void BuildMenu()
         {
-            string version = GetVersion(null);
-            Build(version);
+            Build(GetVersion(null));
         }
         [MenuItem("Build/Update Config", priority = 2)]
         public static void UpdateConfig1()
         {
-            string version = GetVersion(null);
-            UpdateConfig(version, true);
+            UpdateConfig(GetVersion(null), true);
         }
 
-        [MenuItem("Build/Build Assets", priority = 3)]
+        //[MenuItem("Build/Build Assets", priority = 3)]
         public static void BuildAssetsMenu()
         {
-            string version = GetVersion("assets");
-            Build(version);
+            Build(GetVersion("assets"));
         }
 
         [MenuItem("Build/Build (Debug)", priority = 20)]
         public static void BuildDebug()
         {
-            string version = GetVersion("debug");
-            Build(version);
+            Build(GetVersion("debug"));
         }
 
 
@@ -134,7 +158,6 @@ namespace Unity.Editor
         public static void Build(string version)
         {
             BuildVersion = version;
-
             BuildPlayer();
         }
 
@@ -171,16 +194,22 @@ namespace Unity.Editor
             return ver;
         }
 
+        class Member
+        {
+            public Type type;
+            public string memberName;
+            public string[] values;
+        }
 
 
-
-        public static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
+        private static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
         {
             var configs = new Dictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
+            Regex nsRegex = new Regex("type:([^ $]+)", RegexOptions.IgnoreCase);
 
-            GlobalVars = new Dictionary<string, object>()
+            GlobalVariables = new Dictionary<string, object>()
             {
                 {"DateTime",DateTime.Now },
                 {"BuildTargetGroup" , EditorUserBuildSettings.selectedBuildTargetGroup}
@@ -215,6 +244,7 @@ namespace Unity.Editor
             if (log != null)
                 log.Append("*** config file ***").AppendLine();
 
+            Dictionary<string, Type> types = new Dictionary<string, Type>();
 
             foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
             {
@@ -228,6 +258,39 @@ namespace Unity.Editor
                     string name;
                     string[] values;
                     name = node.LocalName;
+                    Match m = null;
+                    if (!string.IsNullOrEmpty(node.NamespaceURI))
+                        m = nsRegex.Match(node.NamespaceURI);
+                    if (m != null && m.Success)
+                    {
+                        string typeName;
+                        typeName = m.Groups[1].Value;
+                        if (!string.IsNullOrEmpty(typeName))
+                        {
+                            Type type;
+                            if (!types.TryGetValue(typeName, out type))
+                            {
+                                type = Type.GetType(typeName);
+                                if (type == null)
+                                {
+                                    type = AppDomain.CurrentDomain.GetAssemblies()
+                                            .SelectMany(o => o.GetTypes())
+                                            .Where(o => string.Equals(o.Name, typeName, StringComparison.InvariantCultureIgnoreCase)
+                                            || string.Equals(o.FullName, typeName, StringComparison.InvariantCultureIgnoreCase))
+                                            .FirstOrDefault();
+                                }
+                                if (type == null)
+                                    throw new Exception("not found type:" + typeName);
+                                types[typeName] = type;
+                            }
+                        }
+                    }
+                    if (name == "showfolder")
+                    {
+                        string s = typeof(OneBuild).FullName;
+                        s = typeof(OneBuild).AssemblyQualifiedName;
+                        Debug.Log(node.Name + "|" + node.NamespaceURI + "|");
+                    }
                     var valueNodes = node.SelectNodes("*");
                     if (valueNodes.Count > 0)
                     {
@@ -508,7 +571,7 @@ namespace Unity.Editor
             Scenes = scenes;
             OutputPath = outputPath;
             Options = options;
-
+            ShowFolder = Get<bool>("Build.ShowFolder", false);
 
             if (Get("ClearLog", false))
             {
@@ -521,7 +584,7 @@ namespace Unity.Editor
 
         }
 
-          
+
         static void BuildAssetBundles()
         {
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
@@ -642,7 +705,7 @@ namespace Unity.Editor
 
             string outputPath = pathToBuiltProject;
 
-            File.WriteAllText(outputPath + ".txt", sb.ToString());
+            //File.WriteAllText(outputPath + ".txt", sb.ToString());
             Debug.Log("build path\n" + pathToBuiltProject);
         }
 
@@ -784,9 +847,9 @@ namespace Unity.Editor
                         newValue = string.Format(format, newValue);
                     }
                 }
-                else if (GlobalVars.ContainsKey(name))
+                else if (GlobalVariables.ContainsKey(name))
                 {
-                    object v = GlobalVars[name];
+                    object v = GlobalVariables[name];
                     if (v != null && !string.IsNullOrEmpty(format) && v is IFormattable)
                     {
                         newValue = ((IFormattable)v).ToString(format, null);
@@ -903,13 +966,13 @@ namespace Unity.Editor
         #region PreProcessBuild
 
         [PreProcessBuild(-1000)]
-        static void Config()
+        static void PreProcessBuild_Config()
         {
             UpdateConfig(BuildVersion, false);
         }
 
         [PreProcessBuild(-999)]
-        static void ClearBuild()
+        static void PreProcessBuild_Clear()
         {
             if (configs == null)
             {
@@ -921,26 +984,33 @@ namespace Unity.Editor
             string fileName = Get("Output.FileName", string.Empty);
             string outputPath = Path.Combine(outputDir, fileName);
 
-            if (!Directory.Exists(outputDir))
-                Directory.CreateDirectory(outputDir);
-            else
-            {
+            //if (!Directory.Exists(outputDir))
+            //    Directory.CreateDirectory(outputDir);
+            //else
+            //{
 
-                //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
-                //{
-                //    Directory.Delete(dir, false);
-                //}
+            //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
+            //{
+            //    Directory.Delete(dir, false);
+            //}
 
-            }
-            foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
+            //}
+            //foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
+            //{
+            //    File.SetAttributes(file, FileAttributes.Normal);
+            //    File.Delete(file);
+            //}
+        }
+        static void DeleteDirectoryFiles(string path)
+        {
+            foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
             {
                 File.SetAttributes(file, FileAttributes.Normal);
                 File.Delete(file);
             }
         }
-
         [PreProcessBuild(1)]
-        static void Run()
+        static void PreProcessBuild_BuildPlayer()
         {
             if (configs == null)
             {
@@ -956,27 +1026,36 @@ namespace Unity.Editor
             string outputPath = OutputPath;
             string[] scenes = Scenes;
             BuildOptions options = Options;
-            //if (!Directory.Exists(outputPath))
-            //    Directory.CreateDirectory(outputPath);
+
+            if (File.Exists(outputPath))
+            {
+                DeleteDirectoryFiles(Path.GetDirectoryName(outputPath));
+            }
+            else if (Directory.Exists(outputPath))
+            {
+                DeleteDirectoryFiles(outputPath);
+            }
+
 
             if (scenes == null || scenes.Length == 0)
                 throw new Exception("build player scenes empty");
 
-            //if (Directory.Exists(Path.GetDirectoryName(outputPath)))
-            //    Directory.Delete(Path.GetDirectoryName(outputPath), true);
 
             var report = BuildPipeline.BuildPlayer(scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
 
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new Exception("" + report.summary.result);
-            EditorUtility.RevealInFinder(outputPath);
+            if (ShowFolder)
+                EditorUtility.RevealInFinder(outputPath);
         }
 
         #endregion
 
     }
 
-
+    /// <summary>
+    /// use [PreProcessBuild] or method name: [PreProcessBuild]=PreProcessBuild(); [PreProcessBuild(1)]=PreProcessBuild1(); [PreProcessBuild(-1)]=PreProcessBuild_1();
+    /// </summary>
     public class PreProcessBuildAttribute : CallbackOrderAttribute
     {
         public PreProcessBuildAttribute()

@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <config xmlns="urn:schema-config"
+        xmlns:build="type:UnityEditor.Build.OneBuild"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:schema-config ../LWJ/OneBuild/config.xsd">
 
   <output.filename>{$ProductName}.exe</output.filename>
   <build.BuildOptions>AutoRunPlayer</build.BuildOptions>
   <clearLog>true</clearLog>
+  <build:showfolder>true</build:showfolder>
   <build.scenes>
     assets/test/scenes/main.unity
   </build.scenes>
