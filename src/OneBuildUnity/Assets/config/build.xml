@@ -1,30 +1,66 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<config xmlns="urn:schema-config"
+<config xmlns="urn:schema-unity-config"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:schema-config ../LWJ/OneBuild/config.xsd"
         >
 
-  <productName>TestProduct{$DateTime,yyyy-MM-dd}</productName>
-  <companyName>MyCompanyName</companyName>
-  <applicationIdentifier>com.test</applicationIdentifier>
-  <version>1.0.0</version>
-  <versionCode>1</versionCode>
-  <development>false</development>
-  <scriptingBackend>
-    <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
-    <ScriptingImplementation>IL2CPP</ScriptingImplementation>
-  </scriptingBackend>
-  <Advertisements.AdvertisementSettings.testMode>false</Advertisements.AdvertisementSettings.testMode>
-  <Analytics.AnalyticsSettings.testMode>false</Analytics.AnalyticsSettings.testMode>
-  <il2CppCompilerConfiguration>
-    <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
-    <Il2CppCompilerConfiguration>Release</Il2CppCompilerConfiguration>
-  </il2CppCompilerConfiguration>
-  <SetApiCompatibilityLevel>
-    <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
-    <ApiCompatibilityLevel>NET_2_0</ApiCompatibilityLevel>
-  </SetApiCompatibilityLevel>
+  <Type type="UnityEditor.Build.OneBuild" name="Build">
+    <Version>1.0.0</Version>
+    <VersionCode>1</VersionCode>
+    <OutputDir>Build/{$Build:Version}/Release/{$Build:BuildTargetGroup}</OutputDir>
+    <ShowFolder>true</ShowFolder>
+  </Type>
 
-  <output.dir>Build/{$version}/Release/{$BuildTargetGroup}</output.dir>
+  <Type type="UnityEditor.PlayerSettings">
+    <productName>TestProduct</productName>
+    <companyName>MyCompanyName</companyName>
+    <SetApplicationIdentifier>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <string>com.test</string>
+    </SetApplicationIdentifier>
+    <SetScriptingBackend>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <ScriptingImplementation>IL2CPP</ScriptingImplementation>
+    </SetScriptingBackend>
+    <SetIl2CppCompilerConfiguration>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <Il2CppCompilerConfiguration>Release</Il2CppCompilerConfiguration>
+    </SetIl2CppCompilerConfiguration>
+    <SetApiCompatibilityLevel>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <ApiCompatibilityLevel>NET_2_0</ApiCompatibilityLevel>
+    </SetApiCompatibilityLevel>
+    <SetStackTraceLogType>
+      <LogType key="true">Log</LogType>
+      <StackTraceLogType>None</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Assert</LogType>
+      <StackTraceLogType>None</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Warning</LogType>
+      <StackTraceLogType>None</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Error</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Exception</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+  </Type>
+  
+  <Type type="UnityEditor.EditorUserBuildSettings">
+    <development>false</development>
+  </Type>
+  
+  <Type type="UnityEditor.Advertisements.AdvertisementSettings">
+    <testMode>false</testMode>
+  </Type>
+  
+  <Type type="UnityEditor.Analytics.AnalyticsSettings">
+    <testMode>false</testMode>
+  </Type>
   
 </config>

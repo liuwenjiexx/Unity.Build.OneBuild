@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<config xmlns="urn:schema-config" 
+<config xmlns="urn:schema-unity-config" 
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-        xsi:schemaLocation="urn:schema-config ../LWJ/OneBuild/config.xsd">
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
   
-  <output.dir>Build/{$version}/Release/iOS/{$productName}_XCodeProject</output.dir>
-  
+  <Type type="UnityEditor.Build.OneBuild">
+  </Type>
 </config>

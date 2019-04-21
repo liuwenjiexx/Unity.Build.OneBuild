@@ -1,12 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<config xmlns="urn:schema-config"
+<config xmlns="urn:schema-unity-config"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:schema-config ../LWJ/OneBuild/config.xsd">
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
 
-  <output.filename>{$productName}_{$version}_{$versionCode}.apk</output.filename>
+  <Type type="UnityEditor.Build.OneBuild" name="Build">
+    <OutputFileName>{$PlayerSettings:productName}_{$Build:Version}_v{$Build:VersionCode}.apk</OutputFileName>
+    <BuildOptions combin="," combinOptions="Remove">AutoRunPlayer</BuildOptions>
+  </Type>
   
-  <PlayerSettings.Android.targetArchitectures>
-    <AndroidArchitecture>ARM64</AndroidArchitecture>
-  </PlayerSettings.Android.targetArchitectures>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+  </Type>
+
+  <Type type="UnityEditor.PlayerSettings.Android">
+    <targetArchitectures>
+      <AndroidArchitecture>ARMv7,ARM64</AndroidArchitecture>
+    </targetArchitectures>
+  </Type>
  
 </config>

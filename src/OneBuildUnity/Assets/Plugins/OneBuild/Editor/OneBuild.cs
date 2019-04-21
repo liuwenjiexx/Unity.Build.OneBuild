@@ -20,32 +20,47 @@ namespace UnityEditor.Build
         public static string ConfigDir = "Assets/Config";
         public static bool log = true;
 
-        static Dictionary<string, string[]> configs;
+
+        static Dictionary<string, ConfigValue> configs;
 
         public static string VersionFileName = "version.txt";
-        private static string KeyPrefix = "buildplayer.";
-        public static string BuildOutputPathKey = KeyPrefix + "outputpath";
-        public static string BuildScenesKey = KeyPrefix + "scenes";
-        public static string BuildOptionsKey = KeyPrefix + "options";
-        public static string BuildShowFolderKey = KeyPrefix + "showfolder";
+        private static string KeyPrefix = "BuildPlayer.";
+        public static string BuildOutputPathKey = KeyPrefix + "OutputPath";
+        public static string BuildScenesKey = KeyPrefix + "Scenes";
+        public static string BuildOptionsKey = KeyPrefix + "BuildOptions";
+        public static string BuildAssetBundleOptionsKey = KeyPrefix + "BuildAssetBundleOptions";
+        public static string BuildShowFolderKey = KeyPrefix + "ShowFolder";
+
+        public const string ConfigNS = "urn:schema-config";
+        public const string OneBuildlType = "UnityEditor.Build.OneBuild";
+        public const string PlayerSettingsType = "UnityEditor.PlayerSettings";
+        public const string EditorUserBuildSettingsType = "UnityEditor.EditorUserBuildSettings";
+        public const string AdvertisementSettingsType = "UnityEditor.Advertisements.AdvertisementSettings";
+        public const string AnalyticsSettingsType = "UnityEditor.Analytics.AnalyticsSettings";
+
+        #region Public Config
+
 
         public static string OutputPath
         {
             get { return EditorPrefs.GetString(BuildOutputPathKey, null); }
             set { EditorPrefs.SetString(BuildOutputPathKey, value); }
         }
-        public static string[] Scenes
+        public static string[] BuildScenes
         {
             get
             {
                 var str = EditorPrefs.GetString(BuildScenesKey, null);
                 if (string.IsNullOrEmpty(str))
                     return new string[0];
-                return str.Split(',');
+                return str.Split(';');
             }
-            set { EditorPrefs.SetString(BuildScenesKey, value == null ? string.Empty : string.Join(",", value)); }
+            set
+            {
+                EditorPrefs.SetString(BuildScenesKey, value == null ? string.Empty : string.Join(";", value.Select(o => o.Trim()).ToArray()));
+            }
         }
-        public static BuildOptions Options
+        public static BuildOptions BuildOptions
         {
             get
             {
@@ -59,64 +74,91 @@ namespace UnityEditor.Build
             get { return EditorPrefs.GetBool(BuildShowFolderKey, false); }
             set { EditorPrefs.SetBool(BuildShowFolderKey, value); }
         }
+        public static BuildAssetBundleOptions BuildAssetBundleOptions
+        {
+            get
+            {
+                var n = EditorPrefs.GetInt(BuildAssetBundleOptionsKey, (int)BuildAssetBundleOptions.None);
+                return (BuildAssetBundleOptions)n;
+            }
+            set { EditorPrefs.SetInt(BuildAssetBundleOptionsKey, (int)value); }
+        }
+
+
+        #endregion
 
 
         static string VersionPath
         {
             get { return ConfigDir + "/version.txt"; }
         }
-        private const string LastBuildVersionKey = "OneBuild.LastBuildVersion";
+        private const string BuildVersionKey = "OneBuild.BuildVersion";
         public static string BuildVersion
         {
-            get { return PlayerPrefs.GetString(LastBuildVersionKey, string.Empty); }
+            get { return PlayerPrefs.GetString(BuildVersionKey, string.Empty); }
             set
             {
-                PlayerPrefs.SetString(LastBuildVersionKey, value);
+                PlayerPrefs.SetString(BuildVersionKey, value);
                 PlayerPrefs.Save();
             }
         }
         public static Dictionary<string, string[]> Configs
         {
-            get { return configs; }
+            get { return configs.ToDictionary(o => o.Key, o => o.Value.values); }
         }
 
-        public static Dictionary<string, object> GlobalVariables;
 
-        public static HashSet<string> CustomMembers = new HashSet<string>()
+
+        public static string Version
         {
-            "version",
-            "versionCode",
-            "output.dir",
-            "output.filename",
-            "loggingError",
-            "loggingAssert",
-            "loggingWarning",
-            "loggingLog",
-            "loggingException",
-            "clearLog",
-            "build.BuildOptions",
-            "build.BuildAssetBundleOptions",
-            "build.scenes",
-            "build.assets",
-            "build.showfolder",
-        };
+            get { return PlayerSettings.bundleVersion; }
+            set { PlayerSettings.bundleVersion = value; }
+        }
+        public static string VersionCode
+        {
+            get
+            {
+                switch (BuildTargetGroup)
+                {
+                    case BuildTargetGroup.Android:
+                        return PlayerSettings.Android.bundleVersionCode.ToString();
+                    case BuildTargetGroup.iOS:
+                        return PlayerSettings.iOS.buildNumber;
+                }
+                return "0";
+            }
+            set
+            {
+                switch (BuildTargetGroup)
+                {
+                    case BuildTargetGroup.Android:
+                        PlayerSettings.Android.bundleVersionCode = int.Parse(value);
+                        break;
+                    case BuildTargetGroup.iOS:
+                        PlayerSettings.iOS.buildNumber = value;
+                        break;
+                }
+            }
+        }
+        public static string OutputDir { get; set; }
+        public static string OutputFileName { get; set; }
+        public static bool ClearLog { get; set; }
+        public static bool LogConfigValues { get; set; }
 
+        public static DateTime LocalTime
+        {
+            get; set;
+        }
+        public static DateTime UtcTime
+        {
+            get; set;
+        }
 
-        //public static string version;
-        //public static string versionCode;
-        //    "output.dir",
-        //    "output.filename",
-        //    "loggingError",
-        //    "loggingAssert",
-        //    "loggingWarning",
-        //    "loggingLog",
-        //    "loggingException",
-        //    "clearLog",
-        //    "build.BuildOptions",
-        //    "build.BuildAssetBundleOptions",
-        //    "build.scenes",
-        //    "build.assets", 
-
+        public static BuildTargetGroup BuildTargetGroup
+        {
+            get { return EditorUserBuildSettings.selectedBuildTargetGroup; }
+            set { EditorUserBuildSettings.selectedBuildTargetGroup = value; }
+        }
 
 
         public static Dictionary<string, string> append = new Dictionary<string, string>()
@@ -132,7 +174,7 @@ namespace UnityEditor.Build
         [MenuItem("Build/Update Config", priority = 2)]
         public static void UpdateConfig1()
         {
-            UpdateConfig(GetVersion(null), true);
+            UpdateConfig(GetVersion(null));
         }
 
         //[MenuItem("Build/Build Assets", priority = 3)]
@@ -152,7 +194,7 @@ namespace UnityEditor.Build
         public static void UpdateConfigDebug()
         {
             string version = GetVersion("debug");
-            UpdateConfig(version, true);
+            UpdateConfig(version);
         }
 
         public static void Build(string version)
@@ -160,9 +202,6 @@ namespace UnityEditor.Build
             BuildVersion = version;
             BuildPlayer();
         }
-
-
-
 
         public static string GetVersion(string version)
         {
@@ -194,26 +233,18 @@ namespace UnityEditor.Build
             return ver;
         }
 
-        class Member
-        {
-            public Type type;
-            public string memberName;
-            public string[] values;
-        }
 
 
-        private static Dictionary<string, string[]> LoadConfig(string version, StringBuilder log = null)
+        private static Dictionary<string, ConfigValue> LoadConfig(string version)
         {
-            var configs = new Dictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
+            var configs = new Dictionary<string, ConfigValue>(StringComparer.InvariantCultureIgnoreCase);
             Dictionary<string, int> matchs = new Dictionary<string, int>();
 
             Regex nsRegex = new Regex("type:([^ $]+)", RegexOptions.IgnoreCase);
 
-            GlobalVariables = new Dictionary<string, object>()
-            {
-                {"DateTime",DateTime.Now },
-                {"BuildTargetGroup" , EditorUserBuildSettings.selectedBuildTargetGroup}
-            };
+            BuildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            LocalTime = DateTime.Now;
+            UtcTime = DateTime.UtcNow;
 
             if (!string.IsNullOrEmpty(version))
             {
@@ -231,6 +262,7 @@ namespace UnityEditor.Build
 
             matchs.Add(EditorUserBuildSettings.selectedBuildTargetGroup.ToString().ToLower(), 1);
 
+
             foreach (var file in Directory.GetFiles(ConfigDir))
             {
                 string[] tmp = Path.GetFileNameWithoutExtension(file).Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
@@ -241,119 +273,200 @@ namespace UnityEditor.Build
                     files.Add(file, tmp.Sum(o => matchs[o]));
                 }
             }
-            if (log != null)
-                log.Append("*** config file ***").AppendLine();
+            Dictionary<string, Type> fileTypes = new Dictionary<string, Type>();
+            List<ConfigValue> fileValues = new List<ConfigValue>();
+            string filePath = null;
 
-            Dictionary<string, Type> types = new Dictionary<string, Type>();
+
+            Action<XmlNode, Type> parseNode = (node, type) =>
+             {
+
+                 ConfigValue configValue = new ConfigValue()
+                 {
+                     memberName = node.LocalName,
+                 };
+                 configValue.type = type;
+                 configValue.combin = GetAttributeValue(node, "combin", "");
+                 string combinOptionsStr = GetAttributeValue(node, "combinOptions", null);
+                 if (!string.IsNullOrEmpty(combinOptionsStr))
+                     configValue.combinOptions = (CombineOptions)ParseEnum(typeof(CombineOptions), combinOptionsStr);
+
+                 var valueNodes = node.SelectNodes("*");
+                 List<string> argsKeys = new List<string>();
+                 if (valueNodes.Count > 0)
+                 {
+                     configValue.values = new string[valueNodes.Count];
+                     for (int i = 0; i < valueNodes.Count; i++)
+                     {
+                         var valueNode = valueNodes[i];
+                         configValue.values[i] = valueNode.InnerText;
+                         if (valueNode.Attributes["key"] != null)
+                         {
+                             var keyAttr = valueNode.Attributes["key"];
+                             bool b;
+                             if (bool.TryParse(keyAttr.Value, out b))
+                             {
+                                 argsKeys.Add(configValue.values[i]);
+                             }
+                         }
+                     }
+                 }
+                 else
+                 {
+                     configValue.values = new string[] { node.InnerText };
+                 }
+
+
+                 configValue.key = GetKey(type, configValue.memberName, argsKeys.ToArray());
+
+                 configValue.member = FindSetMember(configValue);
+                 if (configValue.member == null)
+                     Debug.LogError("not found member. " + configValue + ", file:" + filePath);
+
+
+                 fileValues.Add(configValue);
+
+
+             };
+
 
             foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
             {
-                if (log != null)
-                    log.Append(file).AppendLine();
+                fileTypes.Clear();
+                fileValues.Clear();
+                filePath = file;
                 XmlDocument doc;
                 doc = new XmlDocument();
                 doc.Load(file);
+
                 foreach (XmlNode node in doc.DocumentElement.SelectNodes("*"))
                 {
-                    string name;
-                    string[] values;
-                    name = node.LocalName;
-                    Match m = null;
-                    if (!string.IsNullOrEmpty(node.NamespaceURI))
-                        m = nsRegex.Match(node.NamespaceURI);
-                    if (m != null && m.Success)
+                    switch (node.LocalName.ToLower())
                     {
-                        string typeName;
-                        typeName = m.Groups[1].Value;
-                        if (!string.IsNullOrEmpty(typeName))
-                        {
-                            Type type;
-                            if (!types.TryGetValue(typeName, out type))
+                        case "type":
+                            var typeAttr = node.Attributes["type"];
+
+                            if (typeAttr == null)
+                                throw new Exception("node not name attribute. " + node.LocalName + " file:" + filePath);
+
+                            string typeName = typeAttr.Value;
+                            var type = FindType(typeName);
+
+                            if (type == null)
+                                throw new Exception("not found type:" + typeName + ", file:" + file);
+
+                            fileTypes[typeName] = type;
+
+                            string name = GetAttributeValue(node, "name", null);
+                            if (!string.IsNullOrEmpty(name))
+                                fileTypes[name] = type;
+
+                            foreach (XmlNode itemNode in node.SelectNodes("*"))
                             {
-                                type = Type.GetType(typeName);
-                                if (type == null)
-                                {
-                                    type = AppDomain.CurrentDomain.GetAssemblies()
-                                            .SelectMany(o => o.GetTypes())
-                                            .Where(o => string.Equals(o.Name, typeName, StringComparison.InvariantCultureIgnoreCase)
-                                            || string.Equals(o.FullName, typeName, StringComparison.InvariantCultureIgnoreCase))
-                                            .FirstOrDefault();
-                                }
-                                if (type == null)
-                                    throw new Exception("not found type:" + typeName);
-                                types[typeName] = type;
+                                parseNode(itemNode, type);
                             }
-                        }
-                    }
-                    if (name == "showfolder")
-                    {
-                        string s = typeof(OneBuild).FullName;
-                        s = typeof(OneBuild).AssemblyQualifiedName;
-                        Debug.Log(node.Name + "|" + node.NamespaceURI + "|");
-                    }
-                    var valueNodes = node.SelectNodes("*");
-                    if (valueNodes.Count > 0)
-                    {
-                        values = new string[valueNodes.Count];
-                        for (int i = 0; i < valueNodes.Count; i++)
-                        {
-                            values[i] = valueNodes[i].InnerText;
-                        }
-                    }
-                    else
-                    {
-                        values = new string[] { node.InnerText };
-                    }
-                    if (append.ContainsKey(name))
-                    {
-                        string[] oldValue = null;
-                        if (configs.ContainsKey(name))
-                        {
-                            oldValue = configs[name];
-                            if (oldValue[0] != null)
-                                oldValue[0] = oldValue[0].TrimEnd();
-                        }
-                        if (oldValue == null || string.IsNullOrEmpty(oldValue[0]))
-                        {
-                            configs[name] = values;
-                        }
-                        else
-                        {
-                            if (oldValue[0].EndsWith(append[name]))
-                            {
-                                oldValue[0] = oldValue[0] + values[0];
-                            }
-                            else
-                            {
-                                oldValue[0] = oldValue[0] + append[name] + values[0];
-                            }
-                        }
-                    }
-                    else
-                    {
-                        configs[name] = values;
+                            break;
+                        default:
+                            Debug.LogErrorFormat("Unknown node: {0}", " node:" + node.LocalName + " , file: " + filePath);
+                            break;
                     }
                 }
 
 
+                foreach (var value in fileValues)
+                {
+                    for (int i = 0; i < value.values.Length; i++)
+                    {
+                        string val = value.values[i];
+                        if (string.IsNullOrEmpty(val))
+                            continue;
+                        val = tplRegex.Replace(val, (m) =>
+                          {
+                              var g = m.Groups[1];
+                              string name = g.Value;
+                              string[] parts = name.Split(':');
+
+                              if (parts.Length > 1)
+                              {
+                                  string typeName = parts[0];
+                                  Type type;
+                                  if (!fileTypes.TryGetValue(typeName, out type))
+                                  {
+                                      throw new Exception("not found type:" + val + ", file:" + file);
+                                  }
+                                  return m.Value.Substring(0, g.Index - m.Index) + GetKey(type, parts[1]) + m.Value.Substring((g.Index - m.Index) + g.Length);
+                              }
+                              else
+                              {
+                                  if (FindGetMember(name) == null)
+                                      throw new Exception("not found get member:" + name + ", file:" + file + ", item:" + value.memberName);
+                              }
+
+                              return m.Value;
+                          });
+
+                        value.values[i] = val;
+                    }
+                }
+
+                foreach (var value in fileValues)
+                {
+                    if (!string.IsNullOrEmpty(value.combin))
+                    {
+                        ConfigValue oldValue = null;
+                        if (configs.ContainsKey(value.key))
+                        {
+                            oldValue = configs[value.key];
+                        }
+                        if (oldValue == null)
+                        {
+                            if ((value.combinOptions & CombineOptions.Remove) == CombineOptions.Remove)
+                            {
+                                continue;
+                            }
+
+                            configs[value.key] = value;
+                        }
+                        else
+                        {
+                            oldValue.Combin(value.values, value.combin, value.combinOptions);
+                        }
+                    }
+                    else
+                    {
+                        configs[value.key] = value;
+                    }
+                }
+
+ 
+                    //Debug.Log(ToString(fileValues) + " file:" + file);
             }
             ReplaceTemplate(configs);
-
-            if (log != null)
-            {
-                log.Append("*** config file ***").AppendLine();
-
-                log.Append("config data:").AppendLine();
-
-                var tmp = configs.ToDictionary(o => o.Key, o => string.Join(",", o.Value));
-                log.Append(JsonUtility.ToJson(new Serialization<string, string>(tmp), true))
-                    .AppendLine();
-                //Debug.Log(sb.ToString());
-            }
 
             return configs;
         }
 
+        static string GetAttributeValue(XmlNode node, string name, string defaultValue)
+        {
+            var attr = node.Attributes[name];
+            if (attr == null)
+                return defaultValue;
+            return attr.Value;
+        }
+
+        private static string ToString(IEnumerable<ConfigValue> values)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("{");
+            foreach (var value in values)
+            {
+                sb.AppendFormat("    \"{0}\": [\"{1}\"]", value.key, string.Join(",", value.values))
+                    .AppendLine();
+            }
+            sb.AppendLine("}");
+
+            return sb.ToString();
+        }
 
         static object ParseEnum(Type enumType, string str)
         {
@@ -371,50 +484,31 @@ namespace UnityEditor.Build
 
 
 
-        static MemberInfo FindSetMember(string typeAndMember, string[] args)
+        static MemberInfo FindSetMember(ConfigValue value)
         {
-            string[] parts = typeAndMember.Split('.');
+            string[] parts = value.memberName.Split('.');
             MemberInfo member = null;
-            Type type = null;
-            string memberName;
-            if (parts.Length > 1)
-            {
-                memberName = parts[parts.Length - 1];
-                string typeName;
-                typeName = typeAndMember.Substring(0, typeAndMember.LastIndexOf('.'));
-                type = Type.GetType(typeName);
+            Type type = value.type;
+            string lowerMemberName = value.memberName.ToLower();
 
-                if (type == null)
-                    type = FindType(typeName);
-                if (type == null)
-                    type = FindType("UnityEditor." + typeName);
-
-            }
-            else
+            foreach (var mInfo in type.GetMembers(BindingFlags.Static | BindingFlags.Public | BindingFlags.SetField | BindingFlags.SetProperty | BindingFlags.InvokeMethod))
             {
-                memberName = parts[0];
-            }
-
-            if (type != null)
-            {
-                member = FindSetMember(type, memberName, args);
-            }
-            else
-            {
-                member = FindSetMember(typeof(PlayerSettings), memberName, args);
-                if (member == null)
-                    member = FindSetMember(typeof(EditorUserBuildSettings), memberName, args);
+                if (mInfo.Name.ToLower() == lowerMemberName)
+                {
+                    member = mInfo;
+                    break;
+                }
             }
 
             return member;
         }
 
-        static MemberInfo FindSetMember(Type type, string memberName, string[] args)
+        static MemberInfo FindGetMember(Type type, string memberName)
         {
             string lowerName = memberName.ToLower();
-            var members = type.GetMembers(BindingFlags.Static | BindingFlags.Public | BindingFlags.SetField | BindingFlags.SetProperty | BindingFlags.InvokeMethod);
+
             MemberInfo member = null;
-            foreach (var mInfo in members)
+            foreach (var mInfo in type.GetMembers(BindingFlags.Static | BindingFlags.Public | BindingFlags.GetField | BindingFlags.GetProperty | BindingFlags.InvokeMethod))
             {
                 if (mInfo.MemberType == MemberTypes.Field || mInfo.MemberType == MemberTypes.Property)
                 {
@@ -425,163 +519,122 @@ namespace UnityEditor.Build
                     }
                 }
             }
-            if (member == null)
-            {
-                string setName = "set" + lowerName;
-                foreach (var mInfo in members)
-                {
-                    if (mInfo.MemberType == MemberTypes.Method)
-                    {
-                        if (mInfo.Name.ToLower() == lowerName || mInfo.Name.ToLower() == setName)
-                        {
-                            MethodInfo m = (MethodInfo)mInfo;
-                            if (m.GetParameters().Length == args.Length)
-                            {
-                                member = mInfo;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            return member;
+        }
+        static MemberInfo FindGetMember(string key)
+        {
+            int index = key.LastIndexOf('.');
+            if (index < 0)
+                return null;
+            string typeName = key.Substring(0, index);
+            string memberName = key.Substring(index + 1);
+            Type type = FindType(typeName);
+            if (type == null)
+                return null;
+            MemberInfo member = FindGetMember(type, memberName);
+
             return member;
         }
 
-        static void SetMember(string typeAndMember, string[] values)
+        static object GetValueByKey(string key)
         {
-            MemberInfo member = FindSetMember(typeAndMember, values);
+            var member = FindGetMember(key);
             if (member == null)
+                throw new Exception("not found get member:" + key);
+            object value;
+            if (member is PropertyInfo)
             {
-                Debug.LogError("Not Find Member: " + typeAndMember);
+                PropertyInfo pInfo = (PropertyInfo)member;
+                value = pInfo.GetValue(null, null);
             }
-            try
+            else if (member is FieldInfo)
             {
-                if (member is PropertyInfo)
-                {
-                    PropertyInfo pInfo = (PropertyInfo)member;
-                    pInfo.SetValue(null, ChangeType(values[0], pInfo.PropertyType), null);
-                }
-                else if (member is FieldInfo)
-                {
-                    FieldInfo fInfo = (FieldInfo)member;
-                    fInfo.SetValue(null, ChangeType(values[0], fInfo.FieldType));
-                }
-                else if (member is MethodInfo)
-                {
-                    MethodInfo mInfo = (MethodInfo)member;
-                    object[] args = mInfo.GetParameters()
-                        .Select((o, i) => ChangeType(values[i], o.ParameterType))
-                        .ToArray();
-                    mInfo.Invoke(null, args);
-                }
+                FieldInfo fInfo = (FieldInfo)member;
+                value = fInfo.GetValue(null);
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError("Set Member Error: " + typeAndMember + " = " + string.Join(",", values));
-                throw ex;
+                MethodInfo mInfo = (MethodInfo)member;
+                value = mInfo.Invoke(null, null);
             }
+            return value;
         }
 
+        static object ChangeType(string[] value, Type type)
+        {
+            if (type == typeof(string[]))
+                return value;
+
+
+            return ChangeType(value[0], type);
+        }
         static object ChangeType(string value, Type type)
         {
+            if (type == typeof(string))
+            {
+                if (value is string)
+                    return value;
+                return value.ToString();
+            }
             if (type.IsEnum)
-                return ParseEnum(type, value);
+            {
+                return ParseEnum(type, value as string);
+            }
             return Convert.ChangeType(value, type);
         }
-
         static Type FindType(string typeName)
         {
-            return AppDomain.CurrentDomain.GetAssemblies().SelectMany(o => o.GetTypes()).Where(o => o.FullName == typeName || (o.IsNested && o.FullName.Replace('+', '.') == typeName)).FirstOrDefault();
+            Type type;
+            type = Type.GetType(typeName);
+            if (type == null)
+            {
+                type = AppDomain.CurrentDomain.GetAssemblies()
+                 .SelectMany(o => o.GetTypes())
+                 .Where(o => string.Equals(o.FullName, typeName, StringComparison.InvariantCultureIgnoreCase) ||
+                     string.Equals(o.Name, typeName, StringComparison.InvariantCultureIgnoreCase) ||
+                     (o.IsNested && o.FullName.Replace('+', '.') == typeName))
+                 .FirstOrDefault();
+            }
+            return type;
         }
 
 
-
-        public static void UpdateConfig(string version, bool log)
+        public static void UpdateConfig(string version)
         {
-            StringBuilder sb = null;
-            if (log)
-                sb = new StringBuilder();
-            configs = LoadConfig(version, sb);
+            configs = LoadConfig(version);
+
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
+            BuildScenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
+            ShowFolder = false;
+            BuildOptions = BuildOptions.None;
+            OutputPath = null;
+            BuildAssetBundleOptions = BuildAssetBundleOptions.None;
 
-            foreach (var item in configs)
+            foreach (var item in configs.Values)
             {
-                if (CustomMembers.Contains(item.Key))
-                    continue;
-                SetMember(item.Key, item.Value);
+                item.SetValue();
             }
 
-            if (buildGroup == BuildTargetGroup.Android || buildGroup == BuildTargetGroup.iOS)
+            if (ClearLog)
             {
-                if (Contains("Version"))
-                    PlayerSettings.bundleVersion = Get("Version");
+                _ClearLog();
+            }
+            if (LogConfigValues)
+            {
+                Debug.Log(ToString(configs.Values));
             }
 
-            if (Contains("loggingError"))
-                PlayerSettings.SetStackTraceLogType(LogType.Error, Get("loggingError", StackTraceLogType.ScriptOnly));
-            if (Contains("loggingAssert"))
-                PlayerSettings.SetStackTraceLogType(LogType.Assert, Get("loggingAssert", StackTraceLogType.ScriptOnly));
-            if (Contains("loggingWarning"))
-                PlayerSettings.SetStackTraceLogType(LogType.Warning, Get("loggingWarning", StackTraceLogType.ScriptOnly));
-            if (Contains("loggingLog"))
-                PlayerSettings.SetStackTraceLogType(LogType.Log, Get("loggingLog", StackTraceLogType.ScriptOnly));
-            if (Contains("loggingException"))
-                PlayerSettings.SetStackTraceLogType(LogType.Exception, Get("loggingException", StackTraceLogType.ScriptOnly));
+            string outputPath = Path.Combine(OutputDir, OutputFileName);
 
-            switch (buildGroup)
-            {
-                case BuildTargetGroup.Android:
-                    if (Contains("VersionCode"))
-                        PlayerSettings.Android.bundleVersionCode = Get("VersionCode", 1);
-                    break;
-                case BuildTargetGroup.iOS:
-                    if (Contains("VersionCode"))
-                        PlayerSettings.iOS.buildNumber = Get("VersionCode");
-                    break;
-            }
-            if (sb != null)
-                Debug.Log("Update Config\n" + sb.ToString());
-
-
-            string outputDir = Get("Output.Dir");
-            string fileName = Get("Output.FileName", string.Empty);
-            string outputPath = Path.Combine(outputDir, fileName);
-            BuildOptions options;
-            string[] scenes = null;
-
-
-            options = Get<BuildOptions>("Build.BuildOptions", BuildOptions.None);
-
-            if (Contains("Build.Scenes"))
-            {
-                string tmp = Get("Build.Scenes");
-                tmp = tmp.Trim();
-                if (!string.IsNullOrEmpty(tmp))
-                    scenes = tmp.Split(',');
-            }
-
-            if (scenes == null || scenes.Length == 0)
-            {
-                scenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
-            }
-
-
-            Scenes = scenes;
             OutputPath = outputPath;
-            Options = options;
-            ShowFolder = Get<bool>("Build.ShowFolder", false);
 
-            if (Get("ClearLog", false))
-            {
-                ClearLog();
-            }
+
 
             AssetDatabase.SaveAssets();
 
             AssetDatabase.Refresh();
-
         }
 
 
@@ -589,8 +642,8 @@ namespace UnityEditor.Build
         {
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
             BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-            string outputDir = Get("Output.Dir");
-            string[] tmp = Get<string[]>("Build.Assets");
+            string outputDir = OutputDir;
+            string[] tmp = Get<string[]>(GetKey(PlayerSettingsType, "Build.Assets"));
 
             AssetBundleBuild[] assetBundleBuilds = new AssetBundleBuild[tmp.Length];
             for (int i = 0; i < assetBundleBuilds.Length; i++)
@@ -604,14 +657,14 @@ namespace UnityEditor.Build
             }
 
 
-            BuildAssetBundleOptions assetBundleOptions = Get<BuildAssetBundleOptions>("Build.BuildAssetBundleOptions", BuildAssetBundleOptions.None);
+            BuildAssetBundleOptions assetBundleOptions = Get<BuildAssetBundleOptions>(GetKey(PlayerSettingsType, "BuildAssetBundleOptions"), BuildAssetBundleOptions.None);
             BuildPipeline.BuildAssetBundles(outputDir, assetBundleBuilds, assetBundleOptions, buildTarget);
 
             Debug.Log("Build Assets Complete.");
         }
 
 
-        public static void ClearLog()
+        public static void _ClearLog()
         {
             if (Application.isEditor)
             {
@@ -634,8 +687,8 @@ namespace UnityEditor.Build
         [PostProcessBuild(0)]
         public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
         {
-            var sb = new StringBuilder();
-            configs = LoadConfig(BuildVersion, sb);
+
+            configs = LoadConfig(BuildVersion);
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
 
@@ -656,7 +709,7 @@ namespace UnityEditor.Build
                 //pbxProj.AddFrameworkToProject(targetGuid, "WebKit.framework", true);
                 //pbxProj.AddFrameworkToProject(targetGuid, "StoreKit.framework", false);
                 //pbxProj.AddCapability(targetGuid, PBXCapabilityType.InAppPurchase);
-                if (Get("iOS.GameCenter", false))
+                if (Get(GetKey(PlayerSettingsType, "iOS.GameCenter"), false))
                 {
                     //Game Center
                     pbxProj.AddFrameworkToProject(targetGuid, "GameKit.framework", false);
@@ -664,21 +717,21 @@ namespace UnityEditor.Build
                 }
 
 
-#if BUGLY_SDK
-            //Bugly
+                //#if BUGLY_SDK
+                //            //Bugly
 
-            pbxProj.AddFrameworkToProject(targetGuid, "Security.framework", false);
-            pbxProj.AddFrameworkToProject(targetGuid, "SystemConfiguration.framework", false);
-            pbxProj.AddFrameworkToProject(targetGuid, "JavaScriptCore.framework", true);
-            pbxProj.AddFileToBuild(targetGuid, pbxProj.AddFile("usr/lib/libz.tbd", "Frameworks/libz.tbd", PBXSourceTree.Sdk));
-            pbxProj.AddFileToBuild(targetGuid, pbxProj.AddFile("usr/lib/libc++.tbd", "Frameworks/libc++.tbd", PBXSourceTree.Sdk));
+                //            pbxProj.AddFrameworkToProject(targetGuid, "Security.framework", false);
+                //            pbxProj.AddFrameworkToProject(targetGuid, "SystemConfiguration.framework", false);
+                //            pbxProj.AddFrameworkToProject(targetGuid, "JavaScriptCore.framework", true);
+                //            pbxProj.AddFileToBuild(targetGuid, pbxProj.AddFile("usr/lib/libz.tbd", "Frameworks/libz.tbd", PBXSourceTree.Sdk));
+                //            pbxProj.AddFileToBuild(targetGuid, pbxProj.AddFile("usr/lib/libc++.tbd", "Frameworks/libc++.tbd", PBXSourceTree.Sdk));
 
-            pbxProj.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
-            pbxProj.SetBuildProperty(targetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
-            pbxProj.SetBuildProperty(targetGuid, "GENERATE_DEBUG_SYMBOLS", "yes");
+                //            pbxProj.AddBuildProperty(targetGuid, "OTHER_LDFLAGS", "-ObjC");
+                //            pbxProj.SetBuildProperty(targetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
+                //            pbxProj.SetBuildProperty(targetGuid, "GENERATE_DEBUG_SYMBOLS", "yes");
 
-            //---Bugly
-#endif
+                //            //---Bugly
+                //#endif
                 pbxProj.WriteToFile(projPath);
 
 
@@ -687,7 +740,7 @@ namespace UnityEditor.Build
                 plist.ReadFromString(File.ReadAllText(plistPath));
                 PlistElementDict rootDict = plist.root;
 
-                if (Get("iOS.GameCenter", false))
+                if (Get(GetKey(PlayerSettingsType, "iOS.GameCenter"), false))
                 {
                     //Game Center
                     var caps = rootDict.CreateArray("UIRequiredDeviceCapabilities");
@@ -723,64 +776,61 @@ namespace UnityEditor.Build
 
         }
 
-
-
-
-
-        public static bool Contains(string name)
+        private static string GetKey(Type type, string memberName, string[] args = null)
         {
-            return configs.ContainsKey(name);
+            return GetKey(type.FullName, memberName, args);
         }
 
-        public static string Get(string name)
+        private static string GetKey(string typeName, string memberName, string[] argss = null)
         {
-            return Get<string>(name);
+            string key = typeName + "." + memberName;
+            if (argss != null && argss.Length > 0)
+            {
+                key += "+" + string.Join("+", argss);
+            }
+            return key;
         }
 
-        public static T Get<T>(string name)
+        public static bool Contains(string key)
         {
-            string[] obj;
-            if (!configs.TryGetValue(name, out obj))
-                throw new Exception("Not Key:" + name);
-            return Get<T>(name, default(T));
+            return configs.ContainsKey(key);
         }
 
-        public static T Get<T>(string name, T defaultValue)
+        public static string Get(string key)
+        {
+            return Get<string>(key);
+        }
+
+        public static T Get<T>(string key)
+        {
+            if (!configs.ContainsKey(key))
+                throw new Exception("Not Key:" + key);
+            return Get<T>(key, default(T));
+        }
+
+        public static T Get<T>(string key, T defaultValue)
         {
             string[] v;
             try
             {
-                if (!configs.TryGetValue(name, out v))
-                    return defaultValue;
+                ConfigValue value;
 
+                if (!configs.TryGetValue(key, out value))
+                    return defaultValue;
+                v = value.values;
                 if (v == null)
                     return default(T);
-                Type type = typeof(T);
-                if (type == typeof(string[]))
-                    return (T)(object)v;
-
-                if (type == typeof(string))
-                {
-                    if (v[0] is string)
-                        return (T)(object)v[0];
-                    return (T)(object)v.ToString();
-                }
-                if (type.IsEnum)
-                {
-                    return (T)ParseEnum(type, v[0] as string);
-                }
-
-                return (T)Convert.ChangeType(v[0], type);
+                return (T)ChangeType(v, typeof(T));
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                Debug.LogError("config error name:" + name);
+                Debug.LogError("config error name:" + key);
                 return defaultValue;
             }
 
         }
-        static Regex tplRegex = new Regex("\\{\\$(.*?)(\\,(.*))?\\}");
+        static Regex tplRegex = new Regex("\\{\\$(.*?)(\\,(.*?))?\\}");
         /// <summary>
         /// Template: {$Name}
         /// </summary>
@@ -803,12 +853,12 @@ namespace UnityEditor.Build
         /// Template: {$Key,FormatString}
         /// </summary>
         /// <param name="input"></param>
-        public static void ReplaceTemplate(Dictionary<string, string[]> input)
+        private static void ReplaceTemplate(Dictionary<string, ConfigValue> input)
         {
             string[] values;
             foreach (var key in input.Keys.ToArray())
             {
-                values = input[key];
+                values = input[key].values;
                 if (values == null)
                     continue;
                 for (int i = 0; i < values.Length; i++)
@@ -824,16 +874,13 @@ namespace UnityEditor.Build
             }
         }
 
-        static string FindReplaceString(Dictionary<string, string[]> input, string key, string value, string startKey)
+        static string FindReplaceString(Dictionary<string, ConfigValue> input, string key, string value, string startKey)
         {
             value = tplRegex.Replace(value, (m) =>
             {
                 string name = m.Groups[1].Value;
                 string format = m.Groups[3].Value;
 
-
-                //value = ReplaceTemplate(value, (name, format) =>
-                //{
                 if (input.Comparer.Equals(key, name))
                     throw new Exception("reference self. key: [" + name + "], key1:[" + key + "]" + "], key2:[" + startKey + "]");
                 if (input.Comparer.Equals(startKey, name))
@@ -841,15 +888,15 @@ namespace UnityEditor.Build
                 string newValue;
                 if (input.ContainsKey(name))
                 {
-                    newValue = FindReplaceString(input, name, input[name][0], startKey);
+                    newValue = FindReplaceString(input, name, input[name].values[0], startKey);
                     if (!string.IsNullOrEmpty(format))
                     {
                         newValue = string.Format(format, newValue);
                     }
                 }
-                else if (GlobalVariables.ContainsKey(name))
+                else
                 {
-                    object v = GlobalVariables[name];
+                    object v = GetValueByKey(name);
                     if (v != null && !string.IsNullOrEmpty(format) && v is IFormattable)
                     {
                         newValue = ((IFormattable)v).ToString(format, null);
@@ -858,59 +905,22 @@ namespace UnityEditor.Build
                     {
                         newValue = v.ToString();
                     }
-
-                }
-                else
-                {
-                    throw new Exception("not found key: [" + name + "]");
                 }
                 return newValue;
             });
             return value;
         }
 
-        enum Architecture
-        {
-            None = 0,
-            ARM64 = 1,
-            /// <summary>
-            /// Arm7和Arm64
-            /// </summary>
-            Universal = 2,
-        }
+        //enum Architecture
+        //{
+        //    None = 0,
+        //    ARM64 = 1,
+        //    /// <summary>
+        //    /// Arm7和Arm64
+        //    /// </summary>
+        //    Universal = 2,
+        //}
 
-        [Serializable]
-        private class Serialization<TKey, TValue> : ISerializationCallbackReceiver
-        {
-            [SerializeField]
-            List<TKey> keys;
-            [SerializeField]
-            List<TValue> values;
-
-            Dictionary<TKey, TValue> target;
-            public Dictionary<TKey, TValue> ToDictionary() { return target; }
-
-            public Serialization(Dictionary<TKey, TValue> target)
-            {
-                this.target = target;
-            }
-
-            public void OnBeforeSerialize()
-            {
-                keys = new List<TKey>(target.Keys);
-                values = new List<TValue>(target.Values);
-            }
-
-            public void OnAfterDeserialize()
-            {
-                var count = Math.Min(keys.Count, values.Count);
-                target = new Dictionary<TKey, TValue>(count);
-                for (var i = 0; i < count; ++i)
-                {
-                    target.Add(keys[i], values[i]);
-                }
-            }
-        }
 
 
         static void BuildPlayer()
@@ -968,39 +978,10 @@ namespace UnityEditor.Build
         [PreProcessBuild(-1000)]
         static void PreProcessBuild_Config()
         {
-            UpdateConfig(BuildVersion, false);
+            UpdateConfig(BuildVersion);
         }
 
-        [PreProcessBuild(-999)]
-        static void PreProcessBuild_Clear()
-        {
-            if (configs == null)
-            {
-                configs = LoadConfig(BuildVersion);
-            }
-            BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-            BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-            string outputDir = Get("Output.Dir");
-            string fileName = Get("Output.FileName", string.Empty);
-            string outputPath = Path.Combine(outputDir, fileName);
 
-            //if (!Directory.Exists(outputDir))
-            //    Directory.CreateDirectory(outputDir);
-            //else
-            //{
-
-            //foreach (var dir in Directory.GetDirectories(outputDir, "*", SearchOption.TopDirectoryOnly))
-            //{
-            //    Directory.Delete(dir, false);
-            //}
-
-            //}
-            //foreach (var file in Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories))
-            //{
-            //    File.SetAttributes(file, FileAttributes.Normal);
-            //    File.Delete(file);
-            //}
-        }
         static void DeleteDirectoryFiles(string path)
         {
             foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
@@ -1017,15 +998,15 @@ namespace UnityEditor.Build
                 configs = LoadConfig(BuildVersion);
             }
 
-            if (Contains("Build.Assets"))
+            if (Contains(GetKey(OneBuildlType, "BuildAssetBundles")))
             {
                 BuildAssetBundles();
                 return;
             }
 
             string outputPath = OutputPath;
-            string[] scenes = Scenes;
-            BuildOptions options = Options;
+            string[] scenes = BuildScenes;
+            BuildOptions options = BuildOptions;
 
             if (File.Exists(outputPath))
             {
@@ -1051,8 +1032,117 @@ namespace UnityEditor.Build
 
         #endregion
 
+
+        static string CombinString(string oldStr, string newStr, string separator, CombineOptions options)
+        {
+            if (string.IsNullOrEmpty(newStr))
+                return oldStr;
+
+            List<string> oldParts = new List<string>();
+            List<string> newParts = new List<string>();
+
+            if (!string.IsNullOrEmpty(oldStr))
+            {
+                if ((options & CombineOptions.Clear) != CombineOptions.Clear)
+                {
+                    oldParts.AddRange(oldStr.Split(new string[] { separator }, StringSplitOptions.None));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(newStr))
+                newParts.AddRange(newStr.Split(new string[] { separator }, StringSplitOptions.None));
+
+
+
+            if ((options & CombineOptions.Remove) == CombineOptions.Remove)
+            {
+                foreach (var newPart in newParts)
+                    oldParts.Remove(newPart);
+            }
+            else
+            {
+                foreach (var newPart in newParts)
+                {
+                    if ((options & CombineOptions.Distinct) == CombineOptions.Distinct)
+                    {
+                        if (oldParts.Contains(newPart))
+                            continue;
+                    }
+                    oldParts.Add(newPart);
+                }
+            }
+            return string.Join(separator, oldParts.ToArray());
+        }
+
+
+        class ConfigValue
+        {
+            public string key;
+            public Type type;
+            public string memberName;
+            public MemberInfo member;
+            public string[] values;
+            public string combin;
+            public CombineOptions combinOptions;
+
+            public void Combin(string[] newValues, string separator, CombineOptions options)
+            {
+                for (int i = 0; i < newValues.Length && i < newValues.Length; i++)
+                {
+                    this.values[i] = CombinString(this.values[i], newValues[i], separator, options);
+                }
+            }
+
+            public void SetValue()
+            {
+
+                if (member == null)
+                {
+                    Debug.LogError("Not Find Member: " + key);
+                }
+                try
+                {
+                    if (member is PropertyInfo)
+                    {
+                        PropertyInfo pInfo = (PropertyInfo)member;
+                        pInfo.SetValue(null, ChangeType(values, pInfo.PropertyType), null);
+                    }
+                    else if (member is FieldInfo)
+                    {
+                        FieldInfo fInfo = (FieldInfo)member;
+                        fInfo.SetValue(null, ChangeType(values, fInfo.FieldType));
+                    }
+                    else if (member is MethodInfo)
+                    {
+                        MethodInfo mInfo = (MethodInfo)member;
+                        object[] args = mInfo.GetParameters()
+                            .Select((o, i) => ChangeType(values[i], o.ParameterType))
+                            .ToArray();
+                        mInfo.Invoke(null, args);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("Set Member Error: " + this + " = " + string.Join(",", values));
+                    throw ex;
+                }
+            }
+
+            public override string ToString()
+            {
+                return string.Format("item: {0} ", key);
+            }
+        }
     }
 
+    [Flags]
+    enum CombineOptions
+    {
+        None,
+        Clear = 0x2,
+        Remove = 0x4,
+        Distinct = 0x8,
+    }
     /// <summary>
     /// use [PreProcessBuild] or method name: [PreProcessBuild]=PreProcessBuild(); [PreProcessBuild(1)]=PreProcessBuild1(); [PreProcessBuild(-1)]=PreProcessBuild_1();
     /// </summary>

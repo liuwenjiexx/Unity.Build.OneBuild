@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<!--<?xml version="1.0" encoding="utf-8"?>
 <xs:schema id="config"
     targetNamespace="urn:schema-config"
     xmlns="urn:schema-config"
@@ -37,7 +37,7 @@
       <xs:element name="channel"/>
       <xs:element name="version"/>
       <xs:element name="versionCode"/>
-      <!--Compile-->
+      --><!--Compile--><!--
       <xs:element name="ScriptingRuntimeVersion"/>
       <xs:element name="ScriptingBackend" type="ScriptingImplementation"/>
       <xs:element name="Architecture" type="Architecture"/>
@@ -47,7 +47,7 @@
       <xs:element name="ScriptingDefineSymbols"/>
       <xs:element name="Il2CppCompilerConfiguration" type="Il2CppCompilerConfiguration"/>
       <xs:element name="ScriptCallOptimization" type="ScriptCallOptimizationLevel"/>
-      <!--Compile-->
+      --><!--Compile--><!--
       <xs:element name="CompressionMethod" type="xs:string"/>
       <xs:element name="TextureCompression" type="xs:string"/>
       <xs:element name="ETC2Fallback" type="xs:string"/>
@@ -57,12 +57,12 @@
       <xs:element name="AotOptions" type="xs:string"/>
 
 
-      <!--Debug Build-->
+      --><!--Debug Build--><!--
       <xs:element name="DevelomentBuild" type="xs:boolean"/>
       <xs:element name="AutoconnectProfiler" type="xs:boolean"/>
       <xs:element name="ScriptDebugging" type="xs:boolean"/>
       <xs:element name="ScriptsOnlyBuild" type="xs:boolean"/>
-      <!--Debug Build-->
+      --><!--Debug Build--><!--
 
       <xs:element name="LogLevel" type="xs:integer"/>
       <xs:element name="LoggingError" type="StackTraceLogType"/>
@@ -74,7 +74,7 @@
       <xs:element name="DefaultOrientation" type="UIOrientation"/>
 
 
-      <!--Android-->
+      --><!--Android--><!--
 
       <xs:element name="Android.KeystoreName"/>
       <xs:element name="Android.KeystorePass"/>
@@ -82,13 +82,13 @@
       <xs:element name="Android.KeyaliasPass"/>
       <xs:element name="Android.TargetArchitectures" type="AndroidArchitecture"/>
       <xs:element name="AndroidArchitecture" type="AndroidArchitecture" />
-      <!--Android-->
+      --><!--Android--><!--
 
-      <!--iOS-->
+      --><!--iOS--><!--
 
       <xs:element name="iOS.HideHomeButton" type="xs:boolean"/>
-      <!--<xs:element name="iOS.AppInBackgroundBehavior"/>
-      <xs:element name="iOS.BackgroundModes"/>-->
+      --><!--<xs:element name="iOS.AppInBackgroundBehavior"/>
+      <xs:element name="iOS.BackgroundModes"/>--><!--
       <xs:element name="iOS.ForceHardShadowsOnMetal" type="xs:boolean"/>
       <xs:element name="iOS.AllowHTTPDownload" type="xs:boolean"/>
       <xs:element name="iOS.ManualProvisioningProfileID"/>
@@ -101,64 +101,64 @@
       <xs:element name="iOS.UseOnDemandResources" type="xs:boolean"/>
 
       <xs:element name="iOS.GameCenter" type="xs:boolean"/>
-      <!--iOS-->
+      --><!--iOS--><!--
 
-      <!-- tvOS-->
+      --><!-- tvOS--><!--
       <xs:element name="tvOS.ManualProvisioningProfileType" type="ProvisioningProfileType"/>
-      <!-- tvOS-->
+      --><!-- tvOS--><!--
 
 
-      <!--Services Settings-->
+      --><!--Services Settings--><!--
 
-      <!--AnalyticsSettings-->
+      --><!--AnalyticsSettings--><!--
       <xs:element name="Analytics.Enabled" type="xs:boolean" />
       <xs:element name="Analytics.TestMode" type="xs:boolean" />
-      <!--AnalyticsSettings-->
+      --><!--AnalyticsSettings--><!--
 
-      <!--AdvertisementSettings-->
+      --><!--AdvertisementSettings--><!--
       <xs:element name="Advertisement.Enabled" type="xs:boolean" />
       <xs:element name="Advertisement.TestMode" type="xs:boolean" />
       <xs:element name="Advertisement.InitializeOnStartup" type="xs:boolean" />
-      <!--AdvertisementSettings-->
+      --><!--AdvertisementSettings--><!--
 
-      <!--PurchasingSettings-->
+      --><!--PurchasingSettings--><!--
       <xs:element name="Purchasing.Enabled" type="xs:boolean" />
-      <!--PurchasingSettings-->
+      --><!--PurchasingSettings--><!--
 
-      <!--CrashReportingSettings-->
+      --><!--CrashReportingSettings--><!--
       <xs:element name="CrashReporting.Enabled" type="xs:boolean" />
       <xs:element name="CrashReporting.CaptureEditorExceptions" type="xs:boolean" />
-      <!--CrashReportingSettings-->
+      --><!--CrashReportingSettings--><!--
 
-      <!--Services Settings-->
+      --><!--Services Settings--><!--
 
 
-      <!-- SDK Plugins Extensions -->
+      --><!-- SDK Plugins Extensions --><!--
 
-      <!--Google SDK-->
+      --><!--Google SDK--><!--
       <xs:element name="Google.ServerClientId"/>
       <xs:element name="Google.RSA"/>
       <xs:element name="Google.ServiceJson"/>
-      <!--Google SDK-->
+      --><!--Google SDK--><!--
 
-      <!--AppsFlyer SDK-->
+      --><!--AppsFlyer SDK--><!--
       <xs:element name="AppsFlyer.AppId"/>
       <xs:element name="AppsFlyer.DevKey"/>
-      <!--AppsFlyer SDK-->
+      --><!--AppsFlyer SDK--><!--
 
-      <!--Facebook SDK-->
+      --><!--Facebook SDK--><!--
       <xs:element name="Facebook.AppId"/>
       <xs:element name="Facebook.DebugAndroidKeyHash"/>
       <xs:element name="Facebook.AppLinkUrl"/>
       <xs:element name="Facebook.PreviewImageUrl"/>
-      <!--Facebook SDK-->
+      --><!--Facebook SDK--><!--
 
-      <!--Bugly SDK-->
+      --><!--Bugly SDK--><!--
       <xs:element name="Bugly.AppId"/>
       <xs:element name="Bugly.ReportLogLevel"/>
-      <!--Bugly SDK-->
+      --><!--Bugly SDK--><!--
 
-      <!-- SDK Plugins Extensions -->
+      --><!-- SDK Plugins Extensions --><!--
 
 
       <xs:element name="Output.Dir" type="xs:string" />
@@ -267,7 +267,7 @@
   </xs:simpleType>
 
 
-  <!-- iOS Enum-->
+  --><!-- iOS Enum--><!--
   <xs:simpleType name="iOSTargetDevice" >
     <xs:restriction base="xs:string">
       <xs:enumeration value="iPhoneOnly" />
@@ -284,6 +284,6 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <!-- iOS Enum-->
+  --><!-- iOS Enum--><!--
 
-</xs:schema>
+</xs:schema>-->

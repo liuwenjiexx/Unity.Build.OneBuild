@@ -1,12 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<config xmlns="urn:schema-config"
+<config xmlns="urn:schema-unity-config"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:schema-config ../LWJ/OneBuild/config.xsd">
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
 
-  <versionCode>1</versionCode>
-  <PlayerSettings.Android.keystoreName></PlayerSettings.Android.keystoreName>
-  <PlayerSettings.Android.keystorePass></PlayerSettings.Android.keystorePass>
-  <PlayerSettings.Android.keyaliasName></PlayerSettings.Android.keyaliasName>
-  <PlayerSettings.Android.keyaliasPass></PlayerSettings.Android.keyaliasPass>
-  <output.filename>{$ProductName}_{$Version}_v{$VersionCode}.apk</output.filename>
+  <Type type="UnityEditor.Build.OneBuild" name="Build">
+    <VersionCode>1</VersionCode>
+    <OutputFileName>{$PlayerSettings:productName}_{$Build:Version}_v{$Build:VersionCode}.apk</OutputFileName>
+  </Type>
+  
+  <Type type="UnityEditor.PlayerSettings.Android">
+    <keystoreName></keystoreName>
+      <keystorePass></keystorePass>
+      <keyaliasName></keyaliasName>
+    <keyaliasPass></keyaliasPass>
+  </Type>
+  
 </config>
