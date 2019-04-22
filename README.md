@@ -10,15 +10,17 @@ Unity3D One Key Config
 
 PlayerSettings.productName
 ``` xml
-<companyName>MyCompanyName</companyName>
+  <Type type="UnityEditor.PlayerSettings">
+    <productName>MyProduct</productName>
+  </Type>
 ```
   
 PlayerSettings.SetScriptingBackend
 ```
-  <scriptingBackend>
-    <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
+  <SetScriptingBackend>
+    <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
     <ScriptingImplementation>IL2CPP</ScriptingImplementation>
-  </scriptingBackend>
+  </SetScriptingBackend>
 ```
 
 ### 文件名格式
