@@ -8,19 +8,65 @@ Unity3D One Key Config
 
 ### 配置样例
 
+#### 属性
 PlayerSettings.productName
 ``` xml
-  <Type type="UnityEditor.PlayerSettings">
-    <productName>MyProduct</productName>
-  </Type>
+<Type type="UnityEditor.PlayerSettings">
+  <productName>MyProduct</productName>
+</Type>
 ```
   
+#### 方法
 PlayerSettings.SetScriptingBackend
+``` xml
+<SetScriptingBackend>
+  <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+  <ScriptingImplementation>IL2CPP</ScriptingImplementation>
+</SetScriptingBackend>
 ```
-  <SetScriptingBackend>
-    <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
-    <ScriptingImplementation>IL2CPP</ScriptingImplementation>
-  </SetScriptingBackend>
+
+#### Flags
+格式:value1,value2... 多个值[,]分隔
+``` xml
+<Type type="UnityEditor.PlayerSettings.Android">
+  <targetArchitectures>
+    <AndroidArchitecture>ARMv7,ARM64</AndroidArchitecture>
+  </targetArchitectures>
+</Type>
+``` 
+
+#### 引用属性
+格式:{$TypeName:Name[,Format]}
+
+``` xml
+<Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+</Type>
+<Type type="UnityEditor.Build.OneBuild" name="Build">
+  <OutputFileName>{$PlayerSettings:productName}_{$Build:Version}_v{$Build:VersionCode}.apk</OutputFileName>
+</Type>
+```
+
+#### 值合并
+#### combin: 合并分隔符
+#### combineOptions: 合并选项 
+
+None 默认追加
+Clear 清除之前所有的值
+Remove 移除指定的值
+Distinct 值不重复
+
+
+#### 字符串值合并 a;b;c...
+``` xml
+<SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct">
+  <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+  <Il2CppCompilerConfiguration>DEBUG</Il2CppCompilerConfiguration>
+</SetScriptingDefineSymbolsForGroup>
+```
+
+#### Flags枚举值合并 value1,value2...
+``` xml
+<BuildOptions combin="," combinOptions="Remove">AutoRunPlayer</BuildOptions>
 ```
 
 ### 文件名格式
@@ -32,13 +78,3 @@ build.config (发布版)
 build.debug.config (开发版)
 build.android.config (Android发布版)
 build.android.debug.config (Android开发版)
-
-
-
-
-## Project reference:
-* [My Space](https://play.google.com/store/apps/details?id=com.lwj.model3d)
-* [Crystal Defense](https://play.google.com/store/apps/details?id=com.lwj.crystaldefense)
-* [Easy Color](https://play.google.com/store/apps/details?id=com.lwj.easycolor)
-* [2048](https://play.google.com/store/apps/details?id=com.lwj.game2048)
-* [Guess Word](https://play.google.com/store/apps/details?id=com.lwj.guessword)
