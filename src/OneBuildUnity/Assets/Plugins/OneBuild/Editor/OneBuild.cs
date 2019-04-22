@@ -183,14 +183,14 @@ namespace UnityEditor.Build
             Build(GetVersion("assets"));
         }
 
-        [MenuItem("Build/Build (Debug)", priority = 20)]
+        [MenuItem("Build/Build (Debug)", priority = 100)]
         public static void BuildDebug()
         {
             Build(GetVersion("debug"));
         }
 
 
-        [MenuItem("Build/Update Config (Debug)", priority = 21)]
+        [MenuItem("Build/Update Config (Debug)", priority = 101)]
         public static void UpdateConfigDebug()
         {
             string version = GetVersion("debug");
