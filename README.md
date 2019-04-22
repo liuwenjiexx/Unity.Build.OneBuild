@@ -60,7 +60,7 @@ Distinct 值不重复
 ``` xml
 <SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct">
   <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
-  <Il2CppCompilerConfiguration>DEBUG</Il2CppCompilerConfiguration>
+  <defines>DEBUG</defines>
 </SetScriptingDefineSymbolsForGroup>
 ```
 
