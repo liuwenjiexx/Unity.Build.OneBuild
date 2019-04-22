@@ -24,12 +24,12 @@ namespace UnityEditor.Build
         static Dictionary<string, ConfigValue> configs;
 
         public static string VersionFileName = "version.txt";
-        private static string KeyPrefix = "BuildPlayer.";
-        public static string BuildOutputPathKey = KeyPrefix + "OutputPath";
-        public static string BuildScenesKey = KeyPrefix + "Scenes";
-        public static string BuildOptionsKey = KeyPrefix + "BuildOptions";
-        public static string BuildAssetBundleOptionsKey = KeyPrefix + "BuildAssetBundleOptions";
-        public static string BuildShowFolderKey = KeyPrefix + "ShowFolder";
+        public static string BuildKeyPrefix = "BuildPlayer.";
+        public static string BuildOutputPathKey = BuildKeyPrefix + "OutputPath";
+        public static string BuildScenesKey = BuildKeyPrefix + "Scenes";
+        public static string BuildOptionsKey = BuildKeyPrefix + "BuildOptions";
+        public static string BuildAssetBundleOptionsKey = BuildKeyPrefix + "BuildAssetBundleOptions";
+        public static string BuildShowFolderKey = BuildKeyPrefix + "ShowFolder";
 
         public const string ConfigNS = "urn:schema-unity-config";
         public const string OneBuildlType = "UnityEditor.Build.OneBuild";
@@ -438,8 +438,8 @@ namespace UnityEditor.Build
                     }
                 }
 
- 
-                    //Debug.Log(ToString(fileValues) + " file:" + file);
+
+                //Debug.Log(ToString(fileValues) + " file:" + file);
             }
             ReplaceTemplate(configs);
 
@@ -954,7 +954,7 @@ namespace UnityEditor.Build
                             }
                         }
                     }
-                    Debug.Log(o.Name);
+                    //Debug.Log(o.Name);
                     return order;
                 }
                 ))

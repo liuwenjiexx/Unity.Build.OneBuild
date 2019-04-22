@@ -7,6 +7,7 @@
     <Version>1.0.0</Version>
     <VersionCode>1</VersionCode>
     <OutputDir>Build/{$Build:Version}/Release/{$Build:BuildTargetGroup}</OutputDir>
+    <ShowFolder>true</ShowFolder>
   </Type>
   
   <Type type="UnityEditor.PlayerSettings">
