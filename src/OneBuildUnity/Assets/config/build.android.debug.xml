@@ -2,7 +2,17 @@
 <config xmlns="urn:schema-unity-config"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  
+  <Type type="UnityEditor.Build.OneBuild" name="Build">
+  </Type>
 
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+    <SetScriptingBackend>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <ScriptingImplementation>Mono2x</ScriptingImplementation>
+    </SetScriptingBackend>
+  </Type>
+  
   <Type type="UnityEditor.PlayerSettings.Android">
     <targetArchitectures>
       <AndroidArchitecture>ARMv7</AndroidArchitecture>

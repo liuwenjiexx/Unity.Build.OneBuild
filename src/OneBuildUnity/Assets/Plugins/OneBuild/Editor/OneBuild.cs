@@ -31,7 +31,7 @@ namespace UnityEditor.Build
         public static string BuildAssetBundleOptionsKey = KeyPrefix + "BuildAssetBundleOptions";
         public static string BuildShowFolderKey = KeyPrefix + "ShowFolder";
 
-        public const string ConfigNS = "urn:schema-config";
+        public const string ConfigNS = "urn:schema-unity-config";
         public const string OneBuildlType = "UnityEditor.Build.OneBuild";
         public const string PlayerSettingsType = "UnityEditor.PlayerSettings";
         public const string EditorUserBuildSettingsType = "UnityEditor.EditorUserBuildSettings";

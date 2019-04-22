@@ -2,8 +2,12 @@
 <config xmlns="urn:schema-unity-config"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
-  
-  <Type type="UnityEditor.PlayerSettings">
+
+  <Type type="UnityEditor.Build.OneBuild" name="Build">
+    <OutputDir>Build/{$Build:Version}/Debug/{$Build:BuildTargetGroup}</OutputDir>
+  </Type>
+
+    <Type type="UnityEditor.PlayerSettings">
     <productName>TestProduct(Debug)</productName>
     <SetApplicationIdentifier>
       <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
@@ -20,7 +24,7 @@
 
     <SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct">
       <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
-      <Il2CppCompilerConfiguration>DEBUG</Il2CppCompilerConfiguration>
+      <defines>DEBUG</defines>
     </SetScriptingDefineSymbolsForGroup>
 
     <SetStackTraceLogType>
