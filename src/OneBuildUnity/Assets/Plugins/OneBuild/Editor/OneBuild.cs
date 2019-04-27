@@ -209,7 +209,7 @@ namespace UnityEditor.Build
             string ver = "";
             if (File.Exists(currentPath))
             {
-                ver = File.ReadAllText(currentPath);
+                ver = File.ReadAllLines(currentPath)[1];
                 ver = ver.Trim();
             }
 
@@ -238,7 +238,6 @@ namespace UnityEditor.Build
         private static Dictionary<string, ConfigValue> LoadConfig(string version)
         {
             var configs = new Dictionary<string, ConfigValue>(StringComparer.InvariantCultureIgnoreCase);
-            Dictionary<string, int> matchs = new Dictionary<string, int>();
 
             Regex nsRegex = new Regex("type:([^ $]+)", RegexOptions.IgnoreCase);
 
@@ -246,33 +245,31 @@ namespace UnityEditor.Build
             LocalTime = DateTime.Now;
             UtcTime = DateTime.UtcNow;
 
-            if (!string.IsNullOrEmpty(version))
-            {
-                foreach (var part in version.Split(',', '\r', '\n'))
-                {
-                    string ver = part.Trim();
-                    if (!string.IsNullOrEmpty(ver))
-                    {
-                        matchs[ver.ToLower()] = 10;
-                    }
-                }
-            }
+            string[] versionParts = version.Trim().ToLower().Split(',');
+            List<string> files = new List<string>();
 
-            Dictionary<string, int> files = new Dictionary<string, int>();
-
-            matchs.Add(EditorUserBuildSettings.selectedBuildTargetGroup.ToString().ToLower(), 1);
+            Dictionary<string, int> orderValues;
+            orderValues = ParseOrderValue(File.ReadAllLines(VersionPath, Encoding.UTF8)[0]);
 
 
             foreach (var file in Directory.GetFiles(ConfigDir))
             {
                 string[] tmp = Path.GetFileNameWithoutExtension(file).Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries);
-                tmp = tmp.Distinct().ToArray();
-                if (tmp.Where(o => matchs.ContainsKey(o.Trim().ToLower()))
-                   .Count() == tmp.Length)
+                tmp = tmp.Select(o => o.Trim().ToLower()).Distinct().ToArray();
+                if (tmp.Where(o => BuildTargetGroup.ToString().ToLower() == o ||
+                versionParts.Contains(o, StringComparer.InvariantCultureIgnoreCase))
+                    .Count() == tmp.Length)
                 {
-                    files.Add(file, tmp.Sum(o => matchs[o]));
+                    files.Add(file);
                 }
             }
+
+            files = Order(files, orderValues, (file, b) =>
+             {
+                 return Path.GetFileNameWithoutExtension(file).ToLower().Split('.').Where(o => ConvertPlatformName(o) == b).Count() > 0;
+             }).ToList();
+
+
             Dictionary<string, Type> fileTypes = new Dictionary<string, Type>();
             List<ConfigValue> fileValues = new List<ConfigValue>();
             string filePath = null;
@@ -330,7 +327,7 @@ namespace UnityEditor.Build
              };
 
 
-            foreach (var file in files.OrderBy(o => o.Value).Select(o => o.Key))
+            foreach (var file in files)
             {
                 fileTypes.Clear();
                 fileValues.Clear();
@@ -439,11 +436,53 @@ namespace UnityEditor.Build
                 }
 
 
-                //Debug.Log(ToString(fileValues) + " file:" + file);
+                //Debug.Log("file:" + file + "\n" + ToString(fileValues));
             }
             ReplaceTemplate(configs);
 
             return configs;
+        }
+
+
+        static Dictionary<string, int> ParseOrderValue(string str)
+        {
+            Dictionary<string, int> order = new Dictionary<string, int>();
+
+            foreach (var item in str.Split(';'))
+            {
+                if (item.Length == 0)
+                    continue;
+                string[] parts = item.Split(',');
+                string name = parts[0].ToLower().Trim();
+                int n = 0;
+                if (parts.Length > 1 && !int.TryParse(parts[1], out n))
+                {
+                    n = 0;
+                }
+                order[name] = n;
+            }
+            return order;
+        }
+        static IEnumerable<string> Order(IEnumerable<string> names, Dictionary<string, int> order, Func<string, string, bool> equalName)
+        {
+            if (equalName == null)
+                throw new ArgumentNullException("equalName");
+
+            foreach (var orderItem in order.OrderByDescending(o => o.Value))
+            {
+                names = names.OrderBy(o => equalName(o, orderItem.Key) ? 1 : 0);
+            }
+            return names;
+        }
+        static string ConvertPlatformName(string name)
+        {
+            if (string.Equals(name, "standalone"))
+                return "platform";
+
+            if (Enum.GetNames(typeof(BuildTargetGroup)).Contains(name, StringComparer.InvariantCultureIgnoreCase))
+                return "platform";
+
+            return name;
         }
 
         static string GetAttributeValue(XmlNode node, string name, string defaultValue)
