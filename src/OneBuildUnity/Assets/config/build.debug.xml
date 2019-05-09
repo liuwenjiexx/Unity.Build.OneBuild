@@ -6,7 +6,6 @@
   
   <Type type="UnityEditor.Build.OneBuild" name="Build">
     <OutputDir>Build/{$Build:Version}/Debug/{$Build:BuildTargetGroup}</OutputDir>
-    <LogConfigValues>true</LogConfigValues>
   </Type>
   
   <Type type="UnityEditor.PlayerSettings">

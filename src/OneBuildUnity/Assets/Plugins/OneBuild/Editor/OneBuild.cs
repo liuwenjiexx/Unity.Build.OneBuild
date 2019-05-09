@@ -143,7 +143,7 @@ namespace UnityEditor.Build
         public static string OutputDir { get; set; }
         public static string OutputFileName { get; set; }
         public static bool ClearLog { get; set; }
-        public static bool LogConfigValues { get; set; }
+        public static bool LogEnable { get; set; }
 
         public static DateTime LocalTime
         {
@@ -235,7 +235,7 @@ namespace UnityEditor.Build
 
 
 
-        private static Dictionary<string, ConfigValue> LoadConfig(string version)
+        private static Dictionary<string, ConfigValue> LoadConfig(string version, StringBuilder log = null)
         {
             var configs = new Dictionary<string, ConfigValue>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -251,6 +251,8 @@ namespace UnityEditor.Build
             Dictionary<string, int> orderValues;
             orderValues = ParseOrderValue(File.ReadAllLines(VersionPath, Encoding.UTF8)[0]);
 
+            if (log != null)
+                log.AppendLine("LoadConfig");
 
             foreach (var file in Directory.GetFiles(ConfigDir))
             {
@@ -435,7 +437,11 @@ namespace UnityEditor.Build
                     }
                 }
 
-
+                if (log != null)
+                {
+                    log.AppendFormat("file:{0}", file)
+                        .AppendLine();
+                }
                 //Debug.Log("file:" + file + "\n" + ToString(fileValues));
             }
             ReplaceTemplate(configs);
@@ -640,7 +646,8 @@ namespace UnityEditor.Build
 
         public static void UpdateConfig(string version)
         {
-            configs = LoadConfig(version);
+            StringBuilder log = new StringBuilder();
+            configs = LoadConfig(version, log);
 
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
@@ -660,9 +667,13 @@ namespace UnityEditor.Build
             {
                 _ClearLog();
             }
-            if (LogConfigValues)
+
+            log.AppendLine("values:")
+                .AppendLine(ToString(configs.Values));
+
+            if (LogEnable)
             {
-                Debug.Log(ToString(configs.Values));
+                Debug.Log(log.ToString());
             }
 
             string outputPath = Path.Combine(OutputDir, OutputFileName);
@@ -966,7 +977,11 @@ namespace UnityEditor.Build
         {
             var task = new EditorTask();
             var attrType = typeof(PreProcessBuildAttribute);
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("Build Task");
+
             Regex preProcessBuildRegex = new Regex("^PreProcessBuild(?:(_?)([0-9]+))?.*");
+
             foreach (var mInfo in AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(o => o.GetTypes())
@@ -992,8 +1007,7 @@ namespace UnityEditor.Build
                                 order = n;
                             }
                         }
-                    }
-                    //Debug.Log(o.Name);
+                    } 
                     return order;
                 }
                 ))
@@ -1006,8 +1020,12 @@ namespace UnityEditor.Build
                     throw new Exception(string.Format("{0}  method:{1}  only empty parameter", attrType.Name, mInfo.Name));
 
                 task.Add((Action)Delegate.CreateDelegate(typeof(Action), mInfo));
+
+                log.AppendFormat("Type:{0} Method{1}", mInfo.DeclaringType.FullName, mInfo)
+                .AppendLine();
             }
 
+            Debug.Log(log.ToString());
             task.Run();
         }
 
