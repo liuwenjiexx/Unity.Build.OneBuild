@@ -1,2 +1,1 @@
-build,0;platform,1;debug,10;
-build
+build;myversion;platform;debug;
