@@ -549,7 +549,6 @@ namespace UnityEditor.Build
 
             foreach (var orderItem in order.OrderByDescending(o => o.Value))
             {
-                Debug.Log(orderItem);
                 names = names.OrderBy(o => equalName(o, orderItem.Key) ? 1 : 0);
             }
             return names;
@@ -726,7 +725,7 @@ namespace UnityEditor.Build
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
-            BuildScenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
+            BuildScenes = EditorBuildSettings.scenes.Where(o => o.enabled).Select(o => o.path).ToArray();
             ShowFolder = false;
             BuildOptions = BuildOptions.None;
             OutputPath = null;
@@ -1151,9 +1150,12 @@ namespace UnityEditor.Build
 
             if (scenes == null || scenes.Length == 0)
                 throw new Exception("build player scenes empty");
-
-
-            var report = BuildPipeline.BuildPlayer(scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
+            BuildPlayerOptions opts = new BuildPlayerOptions();
+            opts.scenes = scenes;
+            opts.locationPathName = outputPath;
+            opts.target = EditorUserBuildSettings.activeBuildTarget;
+           // opts.assetBundleManifestPath = "AssetBundles/Windows/Windows.manifest";
+            var report = BuildPipeline.BuildPlayer(opts);
 
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new Exception("" + report.summary.result);
