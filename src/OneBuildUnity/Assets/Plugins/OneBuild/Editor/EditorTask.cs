@@ -82,7 +82,7 @@ namespace UnityEditor
         {
             if (isUpdateTask)
                 return;
-
+            
             isUpdateTask = true;
             bool changed = false;
             for (int i = 0; CanExecute && i < TaskQueues.Count; i++)
@@ -98,7 +98,8 @@ namespace UnityEditor
                     {
                         try
                         {
-                            task.Callback();
+                            //Debug.Log("execute " + task.Callback.Method.DeclaringType.FullName + ", " + task.Callback.Method);
+                            task.Callback();                            
                         }
                         catch (Exception ex)
                         {

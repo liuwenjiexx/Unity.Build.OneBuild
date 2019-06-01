@@ -8,6 +8,7 @@
     <VersionCode>1</VersionCode>
     <OutputDir>Build/{$Build:Version}/Release/{$Build:BuildTargetGroup}</OutputDir>
     <ShowFolder>true</ShowFolder>
+    <LogEnable>true</LogEnable>
   </Type>
 
   <Type type="UnityEditor.PlayerSettings">

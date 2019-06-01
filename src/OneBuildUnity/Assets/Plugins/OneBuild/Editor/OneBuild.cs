@@ -24,19 +24,35 @@ namespace UnityEditor.Build
         static Dictionary<string, ConfigValue> configs;
 
         public static string VersionFileName = "version.txt";
+        public static string OneBuildKeyPrefix = "OneBuild.";
         public static string BuildKeyPrefix = "BuildPlayer.";
+        public static string VersionNameKey = OneBuildKeyPrefix + "VersionName";
         public static string BuildOutputPathKey = BuildKeyPrefix + "OutputPath";
         public static string BuildScenesKey = BuildKeyPrefix + "Scenes";
         public static string BuildOptionsKey = BuildKeyPrefix + "BuildOptions";
         public static string BuildAssetBundleOptionsKey = BuildKeyPrefix + "BuildAssetBundleOptions";
         public static string BuildShowFolderKey = BuildKeyPrefix + "ShowFolder";
 
+
         public const string ConfigNS = "urn:schema-unity-config";
         public const string OneBuildlType = "UnityEditor.Build.OneBuild";
         public const string PlayerSettingsType = "UnityEditor.PlayerSettings";
-        public const string EditorUserBuildSettingsType = "UnityEditor.EditorUserBuildSettings";
-        public const string AdvertisementSettingsType = "UnityEditor.Advertisements.AdvertisementSettings";
-        public const string AnalyticsSettingsType = "UnityEditor.Analytics.AnalyticsSettings";
+        //public const string EditorUserBuildSettingsType = "UnityEditor.EditorUserBuildSettings";
+        //public const string AdvertisementSettingsType = "UnityEditor.Advertisements.AdvertisementSettings";
+        //public const string AnalyticsSettingsType = "UnityEditor.Analytics.AnalyticsSettings";
+
+        public const string DebugVersionName = "Debug";
+
+        /// <summary>
+        /// 默认<see cref="DebugVersionName"/>
+        /// </summary>
+        public static string VersionName
+        {
+            get { return EditorPrefs.GetString(VersionNameKey, DebugVersionName) ?? string.Empty; }
+            set { EditorPrefs.SetString(VersionNameKey, value); }
+        }
+
+
 
         #region Public Config
 
@@ -143,7 +159,7 @@ namespace UnityEditor.Build
         public static string OutputDir { get; set; }
         public static string OutputFileName { get; set; }
         public static bool ClearLog { get; set; }
-        public static bool LogConfigValues { get; set; }
+        public static bool LogEnable { get; set; }
 
         public static DateTime LocalTime
         {
@@ -169,12 +185,12 @@ namespace UnityEditor.Build
         [MenuItem("Build/Build", priority = 1)]
         public static void BuildMenu()
         {
-            Build(GetVersion(null));
+            Build(GetVersion(VersionName));
         }
         [MenuItem("Build/Update Config", priority = 2)]
         public static void UpdateConfig1()
         {
-            UpdateConfig(GetVersion(null));
+            UpdateConfig(GetVersion(VersionName));
         }
 
         //[MenuItem("Build/Build Assets", priority = 3)]
@@ -182,20 +198,67 @@ namespace UnityEditor.Build
         {
             Build(GetVersion("assets"));
         }
+        public const string VersionNameSeparator = ",";
 
-        [MenuItem("Build/Build (Debug)", priority = 100)]
-        public static void BuildDebug()
+
+
+        [MenuItem("Build/Release", priority = 20)]
+        public static void VersionName_Release()
         {
-            Build(GetVersion("debug"));
+            RemoveVersion(DebugVersionName);
+        }
+        [MenuItem("Build/Release", priority = 20, validate = true)]
+        public static bool VersionName_Release_Validate()
+        {
+            Menu.SetChecked("Build/Release", !ContainsVersion(DebugVersionName));
+            return true;
+        }
+        [MenuItem("Build/Debug", priority = 20)]
+        public static void VersionName_Debug()
+        {
+            RemoveVersion(DebugVersionName);
+            AddVersion(DebugVersionName);
         }
 
-
-        [MenuItem("Build/Update Config (Debug)", priority = 101)]
-        public static void UpdateConfigDebug()
+        [MenuItem("Build/Debug", priority = 20, validate = true)]
+        public static bool VersionName_Debug_Validate()
         {
-            string version = GetVersion("debug");
-            UpdateConfig(version);
+            Menu.SetChecked("Build/Debug", ContainsVersion(DebugVersionName));
+            return true;
         }
+
+        public static bool ContainsVersion(string version)
+        {
+            return VersionName.ToLower()
+                .Split(new string[] { VersionNameSeparator }, StringSplitOptions.RemoveEmptyEntries)
+                .Contains(version.ToLower());
+        }
+
+        public static void AddVersion(string version)
+        {
+            if (string.IsNullOrEmpty(version))
+                return;
+            List<string> vers;
+            vers = VersionName.ToLower().Split(new string[] { VersionNameSeparator }, StringSplitOptions.RemoveEmptyEntries)
+                 .ToList();
+            if (!vers.Contains(version.ToLower()))
+            {
+                vers.Add(version);
+                VersionName = string.Join(VersionNameSeparator, vers.ToArray());
+            }
+        }
+
+        public static void RemoveVersion(params string[] versions)
+        {
+            string ver = VersionName;
+            if (ver == null)
+                ver = "";
+            ver = string.Join(VersionNameSeparator, ver.ToLower().Split(new string[] { VersionNameSeparator }, StringSplitOptions.RemoveEmptyEntries)
+                 .Where(o => !versions.Contains(o, StringComparer.CurrentCultureIgnoreCase))
+                 .ToArray());
+            VersionName = ver;
+        }
+
 
         public static void Build(string version)
         {
@@ -203,8 +266,8 @@ namespace UnityEditor.Build
             BuildPlayer();
         }
 
-        public static string GetVersion(string version)
-        {
+        static string GetVersion(string version)
+        {/*
             string currentPath = VersionPath;
             string ver = "";
             if (File.Exists(currentPath))
@@ -230,12 +293,13 @@ namespace UnityEditor.Build
                 }
             }
 
-            return ver;
+            return ver;*/
+            return version;
         }
 
 
 
-        private static Dictionary<string, ConfigValue> LoadConfig(string version)
+        private static Dictionary<string, ConfigValue> LoadConfig(string version, StringBuilder log = null)
         {
             var configs = new Dictionary<string, ConfigValue>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -245,12 +309,20 @@ namespace UnityEditor.Build
             LocalTime = DateTime.Now;
             UtcTime = DateTime.UtcNow;
 
-            string[] versionParts = version.Trim().ToLower().Split(',');
+            string[] versionParts = version.Trim().ToLower().Split(new string[] { VersionNameSeparator }, StringSplitOptions.RemoveEmptyEntries);
+            if (!versionParts.Contains("build"))
+            {
+                var tmp = new List<string>(versionParts);
+                tmp.Add("build");
+                versionParts = tmp.ToArray();
+            }
             List<string> files = new List<string>();
 
             Dictionary<string, int> orderValues;
             orderValues = ParseOrderValue(File.ReadAllLines(VersionPath, Encoding.UTF8)[0]);
 
+            if (log != null)
+                log.AppendLine("LoadConfig");
 
             foreach (var file in Directory.GetFiles(ConfigDir))
             {
@@ -435,7 +507,11 @@ namespace UnityEditor.Build
                     }
                 }
 
-
+                if (log != null)
+                {
+                    log.AppendFormat("file:{0}", file)
+                        .AppendLine();
+                }
                 //Debug.Log("file:" + file + "\n" + ToString(fileValues));
             }
             ReplaceTemplate(configs);
@@ -447,19 +523,22 @@ namespace UnityEditor.Build
         static Dictionary<string, int> ParseOrderValue(string str)
         {
             Dictionary<string, int> order = new Dictionary<string, int>();
-
+            int n = 0;
             foreach (var item in str.Split(';'))
             {
                 if (item.Length == 0)
                     continue;
-                string[] parts = item.Split(',');
-                string name = parts[0].ToLower().Trim();
-                int n = 0;
-                if (parts.Length > 1 && !int.TryParse(parts[1], out n))
-                {
-                    n = 0;
-                }
+                //string[] parts = item.Split('=');
+                //string name = parts[0].ToLower().Trim();
+                string name;
+                name = item;
+                //int n = 0;
+                //if (parts.Length > 1 && !int.TryParse(parts[1], out n))
+                //{
+                //    n = 0;
+                //}
                 order[name] = n;
+                n++;
             }
             return order;
         }
@@ -640,12 +719,13 @@ namespace UnityEditor.Build
 
         public static void UpdateConfig(string version)
         {
-            configs = LoadConfig(version);
+            StringBuilder log = new StringBuilder();
+            configs = LoadConfig(version, log);
 
 
             BuildTargetGroup buildGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
 
-            BuildScenes = EditorBuildSettings.scenes.Select(o => o.path).ToArray();
+            BuildScenes = EditorBuildSettings.scenes.Where(o => o.enabled).Select(o => o.path).ToArray();
             ShowFolder = false;
             BuildOptions = BuildOptions.None;
             OutputPath = null;
@@ -660,9 +740,13 @@ namespace UnityEditor.Build
             {
                 _ClearLog();
             }
-            if (LogConfigValues)
+
+            log.AppendLine("values:")
+                .AppendLine(ToString(configs.Values));
+
+            if (LogEnable)
             {
-                Debug.Log(ToString(configs.Values));
+                Debug.Log(log.ToString());
             }
 
             string outputPath = Path.Combine(OutputDir, OutputFileName);
@@ -966,7 +1050,11 @@ namespace UnityEditor.Build
         {
             var task = new EditorTask();
             var attrType = typeof(PreProcessBuildAttribute);
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("Build Task");
+
             Regex preProcessBuildRegex = new Regex("^PreProcessBuild(?:(_?)([0-9]+))?.*");
+
             foreach (var mInfo in AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(o => o.GetTypes())
@@ -993,7 +1081,6 @@ namespace UnityEditor.Build
                             }
                         }
                     }
-                    //Debug.Log(o.Name);
                     return order;
                 }
                 ))
@@ -1006,8 +1093,12 @@ namespace UnityEditor.Build
                     throw new Exception(string.Format("{0}  method:{1}  only empty parameter", attrType.Name, mInfo.Name));
 
                 task.Add((Action)Delegate.CreateDelegate(typeof(Action), mInfo));
+
+                log.AppendFormat("Type:{0} Method{1}", mInfo.DeclaringType.FullName, mInfo)
+                .AppendLine();
             }
 
+            Debug.Log(log.ToString());
             task.Run();
         }
 
@@ -1059,9 +1150,12 @@ namespace UnityEditor.Build
 
             if (scenes == null || scenes.Length == 0)
                 throw new Exception("build player scenes empty");
-
-
-            var report = BuildPipeline.BuildPlayer(scenes, outputPath, EditorUserBuildSettings.activeBuildTarget, options);
+            BuildPlayerOptions opts = new BuildPlayerOptions();
+            opts.scenes = scenes;
+            opts.locationPathName = outputPath;
+            opts.target = EditorUserBuildSettings.activeBuildTarget;
+           // opts.assetBundleManifestPath = "AssetBundles/Windows/Windows.manifest";
+            var report = BuildPipeline.BuildPlayer(opts);
 
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new Exception("" + report.summary.result);
