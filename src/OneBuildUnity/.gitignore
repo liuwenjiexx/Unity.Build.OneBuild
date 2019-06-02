@@ -7,5 +7,7 @@
 *.mdb
 *.dll.mdb.meta
 /.vs/
-/build/
 *.apk
+/obj/
+/logs/
+/build/
