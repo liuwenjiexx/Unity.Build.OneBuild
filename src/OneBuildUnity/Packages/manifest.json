@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "unity.build.package": "file:..\\..\\..\\..\\Unity.Build.Package\\src\\Unity.Build.Package\\Build\\Packages\\unity.build.package@0.0.1",
+    "unity.build.package": "file:..\\..\\..\\..\\Unity.Build.Package\\Packages\\unity.build.package@0.0.1",
     "com.unity.ads": "2.0.8",
     "com.unity.analytics": "3.2.2",
     "com.unity.collab-proxy": "1.2.15",
