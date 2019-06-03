@@ -1,5 +1,5 @@
 {
-  "name": "unity.build",
+  "name": "unity.onebuild",
   "displayName": "One Build",
   "version": "0.0.1",
   "unity": "2018.3",
@@ -10,5 +10,5 @@
     "onebuild"
   ],
   "category": "Unity",
-  "repoPackagePath": "../../Packages"
+  "repoPackagePath": "../../Build/Packages"
 }
