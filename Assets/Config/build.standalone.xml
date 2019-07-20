@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config xmlns="urn:schema-unity-config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+
+  <Type type="UnityEditor.Build.OneBuild.EditorOneBuild">
+    <OutputFilename>{$PlayerSettings:ProductName}.exe</OutputFilename>
+    <BuildOptions>AutoRunPlayer</BuildOptions>
+    <ClearLog>true</ClearLog>
+    <ShowFolder>true</ShowFolder>
+    <BuildScenes>
+      <item>assets/test/scenes/main.unity</item>
+    </BuildScenes>
+  </Type>
+
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings" >
+  </Type>
+  
+</config>

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config xmlns="urn:schema-unity-config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+
+  <Type type="UnityEditor.Build.OneBuild.EditorOneBuild" name="Build">
+    <VersionCode>1</VersionCode>
+    <OutputFileName>{$PlayerSettings:productName}_{$Build:Version}_v{$Build:VersionCode}.apk</OutputFileName>
+  </Type>
+  
+  <Type type="UnityEditor.PlayerSettings.Android">
+    <keystoreName></keystoreName>
+      <keystorePass></keystorePass>
+      <keyaliasName></keyaliasName>
+    <keyaliasPass></keyaliasPass>
+  </Type>
+  
+</config>

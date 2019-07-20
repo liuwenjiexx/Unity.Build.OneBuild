@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config xmlns="urn:schema-unity-config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+
+  <Type type="UnityEditor.PlayerSettings">
+    <scriptingBackend>
+      <BuildTargetGroup>{$BuildTargetGroup}</BuildTargetGroup>
+      <ScriptingImplementation>Mono2x</ScriptingImplementation>
+    </scriptingBackend>
+  </Type>
+
+</config>

@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config xmlns="urn:schema-unity-config"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd"
+     >
+  
+  <Type type="UnityEditor.Build.OneBuild.EditorOneBuild" name="Build">
+    <OutputDir>Build/{$Build:Version}/Debug/{$Build:BuildTargetGroup}</OutputDir>
+  </Type>
+  
+  <Type type="UnityEditor.PlayerSettings">
+    <productName>TestProduct(Debug)</productName>    
+    <SetApplicationIdentifier>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <string>com.test.debug</string>
+    </SetApplicationIdentifier>
+    <SetScriptingBackend>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <ScriptingImplementation>Mono2x</ScriptingImplementation>
+    </SetScriptingBackend>
+    <SetIl2CppCompilerConfiguration>
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <Il2CppCompilerConfiguration>Debug</Il2CppCompilerConfiguration>
+    </SetIl2CppCompilerConfiguration>
+    
+    <SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct">
+      <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
+      <defines>DEBUG</defines>
+    </SetScriptingDefineSymbolsForGroup>
+    
+    <SetStackTraceLogType>
+      <LogType key="true">Log</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Assert</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Warning</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Error</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Exception</LogType>
+      <StackTraceLogType>Full</StackTraceLogType>
+    </SetStackTraceLogType>
+  </Type>
+
+  <Type type="UnityEditor.EditorUserBuildSettings">
+    <development>true</development>
+  </Type>
+  
+  <Type type="UnityEditor.Advertisements.AdvertisementSettings">
+    <testMode>true</testMode>
+  </Type>
+  
+  <Type type="UnityEditor.Analytics.AnalyticsSettings">
+    <testMode>true</testMode>
+  </Type>
+
+</config>

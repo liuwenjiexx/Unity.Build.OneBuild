@@ -1,0 +1,14 @@
+{
+  "name": "unity.build.onebuild",
+  "displayName": "One Build",
+  "version": "0.0.2",
+  "unity": "2018.3",
+  "description": "one key build unity",
+  "keywords": [
+    "unity",
+    "build",
+    "onebuild"
+  ],
+  "category": "Unity",
+  "repoPackagePath": "../UnityPackages"
+}
