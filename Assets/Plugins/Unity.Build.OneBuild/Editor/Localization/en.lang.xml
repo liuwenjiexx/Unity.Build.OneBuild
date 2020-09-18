@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localization xmlns="urn:schema-localization">
+  <string key="Build Config">Build Config</string>
+  <string key="text">text</string>
+  <string key="key">key</string>
+  <string key="msg_del_type_content">delete type &lt;{0}&gt;</string>
+  <string key="Delete">Delete</string>
+  <string key="msg_del_item_content">delete item &lt;{0}&gt;</string>
+  <string key="Text">Text</string>
+  <string key="Key">Key</string>
+  <string key="Combine">Combine</string>
+  <string key="ok">ok</string>
+  <string key="cancel">cancel</string>
+  <string key="error">error</string>
+  <string key="msg_type_exists">type exists &lt;{0}&gt;</string>
+  <string key="msg_file_exists">file exists &lt;{0}&gt;</string>
+  <string key="Load Settings">Load Settings</string>
+  <string key="Build">Build</string>
+  <string key="Pre Build">Pre Build</string>
+  <string key="Alias">Alias</string>
+  <string key="New Config Name">New Config Name</string>
+  <string key="New Type Name">New Type Name</string>
+  <string key="Version Name">Version Name</string>
+  <string key="Version">Version</string>
+  <string key="Major">Major</string>
+  <string key="Minor">Minor</string>
+  <string key="Revision">Revision</string>
+  <string key="Open Project Settings">Open Project Settings</string>
+</localization>

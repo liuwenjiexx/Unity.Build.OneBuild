@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<config xmlns="urn:schema-unity-config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  <Type type="UnityEditor.Build.OneBuild.BuildSettings" name="Build">
+    <OutputDir>Build/Debug/{$Build:@BuildTargetGroup}</OutputDir>
+    <IncrementVersion>-1</IncrementVersion>
+    <IncrementVersionCode>False</IncrementVersionCode>
+  </Type>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+    <productName>TestProduct(Debug)Dev</productName>
+    <SetScriptingDefineSymbolsForGroup combine=";" combineOptions="Distinct">
+      <BuildTargetGroup text="True">{$Build:@BuildTargetGroup}</BuildTargetGroup>
+      <defines combineValue="True">UNITY_DEBUG</defines>
+    </SetScriptingDefineSymbolsForGroup>
+    <SetIl2CppCompilerConfiguration>
+      <BuildTargetGroup text="True">{$Build:@BuildTargetGroup}</BuildTargetGroup>
+      <Il2CppCompilerConfiguration>Debug</Il2CppCompilerConfiguration>
+    </SetIl2CppCompilerConfiguration>
+    <SetStackTraceLogType>
+      <LogType key="true">Log</LogType>
+      <StackTraceLogType>ScriptOnly</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Assert</LogType>
+      <StackTraceLogType>ScriptOnly</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Warning</LogType>
+      <StackTraceLogType>ScriptOnly</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Error</LogType>
+      <StackTraceLogType>ScriptOnly</StackTraceLogType>
+    </SetStackTraceLogType>
+    <SetStackTraceLogType>
+      <LogType key="true">Exception</LogType>
+      <StackTraceLogType>ScriptOnly</StackTraceLogType>
+    </SetStackTraceLogType>
+  </Type>
+  <Type type="UnityEditor.EditorUserBuildSettings" name="">
+    <development>True</development>
+  </Type>
+</config>

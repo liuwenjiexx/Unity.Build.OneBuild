@@ -1,22 +1,28 @@
-﻿# Unity OneBuild
+﻿# Unity Build
 ---
 Unity3D 一键打包工具
 
-管理多个平台配置，将多个配置文件根据文件优先级合并为一个配置
+管理多个平台设置，将多个设置文件根据文件优先级合并为一个设置，在Build时会执行一次加载设置
 
 
 
-#### 菜单
+## 预览
 
-###### Build
+![](doc\images\ui_release.PNG)
+
+
+
+## 菜单
+
+### Build
 
 - Build
 
-  BuildPipeline.BuildPlayer
+  生成
 
-- Update Config
+- Settings
 
-  加载配置文件并运行，在Build前自动执行
+  打开生成配置编辑器
 
 - Release
 
@@ -26,104 +32,239 @@ Unity3D 一键打包工具
 
   开发版本，添加[debug]版本
 
+- Channel - <Channel Name>
+
+  渠道名称
+
 - No User
 
   若勾选则禁用所有已选中的 User/* 版本, 移除[user]版本
 
-- User/UserName
+- User/<User Name >
 
   开发人员可定制的配置，添加[user]版本
 
-**样例：**
-
-```c#
-#region Build User Version A
-
-private const string BuildUserVersionName_A = OneBuild.UserVersionPrefix + "a";
-private const string BuildUserVersionMenuName_A = OneBuild.UserVersionMenu + "A";
-
-[MenuItem(BuildUserVersionMenuName_A, priority = OneBuild.UserVersionMenuPriority)]
-public static void BuildUserVersionMenu_A()
-{
-    OneBuild.SetUserVersion(BuildUserVersionName_A);
-}
-
-[MenuItem(BuildUserVersionMenuName_A, validate = true)]
-public static bool BuildUserVersionMenu_Validate_A()
-{
-    Menu.SetChecked(BuildUserVersionMenuName_A, OneBuild.ContainsVersion(BuildUserVersionName_A));
-    return !OneBuild.IsNoUser;
-}
-
-#endregion
-```
 
 
-### 配置样例
+## 编辑配置
 
-```xml
-<Type type="UnityEditor.Build.OneBuild" name="Build"></Type>
-<Type type="UnityEditor.PlayerSettings" name="PlayerSettings"></Type>
-```
+### 新建配置
 
-- type
+1. 点击菜单 `Build/Settings` 打开配置面板
 
-  指定类型名称
+2. 点击 `New Config` 按钮打开 `Create Build Config` 窗口
 
-- name
+3. 输入参数后点击 `Create` 按钮创建配置文件
 
-  对type起一个别名，可在其它地方引用{$name:Property}
+   - Platform
 
+     平台
+
+   - Channel Name
+
+     渠道名称
+
+   - User Name
+
+     用户名
+
+   - Debug
+
+     是否为 debug 配置
+
+4. 点击`新建配置` 按钮创建配置文件
+
+5. 默认配置包含两个默认配置类型，可添加自定义类型[添加配置类型](#添加配置类型) 
+
+   - UnityEditor.Build.OneBuild.BuildSettings
+
+      别名 Build
+
+   - UnityEditor.PlayerSettings
+
+      别名 PlayerSettings
+      
+      
+
+### 添加配置类型
+1. 已有的 [一般设置类型](#一般设置类型)
+
+   注册新的类型，通过 `BuildConfigTypeAttribute` 特性
+
+   语法：
+   
+   ```c#
+   [assembly: BuildConfigType(configType [, Name])]
+   ```
+   
+   样例：
+   
+   ```C#
+   [assembly: BuildConfigType(typeof(BuildSettings), "Build")]
+   [assembly: BuildConfigType(typeof(UnityEditor.PlayerSettings))]
+   ```
+   
+2. 点击 `Add Type...` 按钮选择类型
+
+
+
+
+### 添加配置属性
+
+1. 点击配置类型右边 `+` 菜单
+
+2. 选择一个配置项点击添加，配置项可以是字段，属性，方法
+
+3. 编辑配置值
+
+ 
+
+**配置项菜单**
+
+点击配置属性名称弹出菜单
+
+- 文本
+
+  强制为文本格式编辑，用于[参数化值](#参数化值)
+
+  ```
+{$Build:@Version}
+  {$Build:@BuildTargetGroup}
+  ```
   
+- 键
 
-#### 属性
-PlayerSettings.productName
-``` xml
-<Type type="UnityEditor.PlayerSettings">
-  <productName>MyProduct</productName>
-</Type>
+  对需要多次设置的属性通过参数生成唯一配置键
+
+  比如：`SetStackTraceLogType` 根据 `logType` 生成 `key`
+
+- 合并
+
+  [值合并](#值合并)
+
+  - 枚举值
+
+    分隔符 `,`
+
+  - 其它值
+
+    比如：`SetScriptingDefineSymbolsForGroup` 设置 `defines` 参数为合并值，分隔符为 `;`
+
+- 删除
+
+  删除该配置项
+
+
+
+
+
+## 一般设置类型
+
+- **UnityEditor.Build.OneBuild.BuildSettings**
+
+  基础 Build 设置
+
+- **UnityEditor.PlayerSettings**
+
+  通用设置
+
+- **UnityEditor.PlayerSettings.Android**
+
+  Android 平台设置
+
+- **UnityEditor.PlayerSettings.iOS**
+
+  iOS 平台设置
+
+- **UnityEditor.Advertisements.AdvertisementSettings**
+
+  Unity 广告设置
+
+- **UnityEditor.Analytics.AnalyticsSettings**
+
+  Unity 事件设置
+  
+- **UnityEditor.CrashReporting.CrashReportingSettings**
+
+  Unity 错误日志报告设置
+
+- **UnityEditor.Purchasing.PurchasingSettings**
+
+  Unity 内购设置
+
+
+
+
+
+## 参数化值
+
+格式
+
+```
+{$<TypeName>:@@<MethodName>}
 ```
 
-#### 方法
+- TypeName
 
-PlayerSettings.SetScriptingBackend
-``` xml
-<SetScriptingBackend>
-  <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
-  <ScriptingImplementation>IL2CPP</ScriptingImplementation>
-</SetScriptingBackend>
+  类型名称或者类型别名
+
+- MethodName
+
+  静态方法名称
+
+
+
+### 常用参数
+
+`targetGroup`
+
+```
+{$Build:@BuildTargetGroup}
 ```
 
-#### Flags
-格式:value1,value2... 多个值[,]分隔
-``` xml
-<Type type="UnityEditor.PlayerSettings.Android">
-  <targetArchitectures>
-    <AndroidArchitecture>ARMv7,ARM64</AndroidArchitecture>
-  </targetArchitectures>
-</Type>
+`Build.OutputDir` Release
+
+```
+Build/Release/{$Build:@BuildTargetGroup}
 ```
 
-#### 引用属性
-格式:{$TypeName:Name[,Format]}
+`Build.OutputDir` Debug
 
-``` xml
-<Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
-</Type>
-<Type type="UnityEditor.Build.OneBuild" name="Build">
-  <OutputFileName>{$PlayerSettings:productName}_{$Build:Version}_v{$Build:VersionCode}.apk</OutputFileName>
-</Type>
+```
+Build/Debug/{$Build:@BuildTargetGroup}
 ```
 
-#### 值合并
-#### combin: 合并分隔符
-#### combineOptions: 合并选项 
+`Build.OutputFileName` Android Release
+
+```
+{$PlayerSettings:@productName}_v{$Build:@Version}_v{$Build:@VersionCode}.apk
+```
+
+
+
+
+
+
+
+
+## 字符串格式化
+
+[字符串格式化](../../../../System.StringFormat/Assets/Plugins/System.StringFormat/README.md)
+
+
+
+
+
+## 值合并
+
+### 合并分隔符
+### 合并选项 
 
 - None
 
   默认追加
 
-- Clear 
+- Replace
 
   清除之前所有的值
 
@@ -135,85 +276,220 @@ PlayerSettings.SetScriptingBackend
 
   去除重复值
 
-  
+### 枚举标志位值，分隔符 `,` 
 
-
-#### 字符串值合并 a;b;c...
 ``` xml
-<SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct">
-  <BuildTargetGroup>{$Build:BuildTargetGroup}</BuildTargetGroup>
-  <defines>DEBUG</defines>
-</SetScriptingDefineSymbolsForGroup>
+value1, value2, value2 ...
 ```
 
-#### Flags枚举值合并 value1,value2...
+
+### `SetScriptingDefineSymbolsForGroup` 值, 分隔符 `;`
 ``` xml
-<BuildOptions combin="," combinOptions="Remove">AutoRunPlayer</BuildOptions>
+value1;value2;value2 ...
 ```
 
 
 
-#### 配置文件目录
+## 配置文件结构
 
-**Assets/Config**
-
-**version.txt**
-
-配置版本优先级，指定配置文件加载顺序
-
-默认的配置：
-
-```
-build;platform;debug;user
-```
-
-- build
-
-默认版本
-
-- platform
-
-平台版本，复合值之一，BuildTargetGroup值，值为 (standalon, android, ios, ...) 
-
-- debug
-
-开发版本，值为(debug)
-
-- user
-
-用户版本，复合值之一，值为(user-xxx) 
+**配置目录Assets/Build**
 
 
 
-#### 样例
+### build.xml
+
+文件后缀为 `build.xml`
 
 **build.xml**
 
 正式版
-**build.debug.xml**
+**debug.build.xml**
 
 开发版
-**build.android.xml**
+**android.build.xml**
 
 Android正式版
-**build.android.debug.xml**
+**android.debug.build.xml**
 
 Android开发版
 
 
 
-### 支持的特性
+- 平台名称
 
-- PreProcessBuildAttribute
+  平台版本，复合值之一，BuildTargetGroup值，如：(standalon, android, ios, ...) 
 
-  Build 管线，在 BuildPipeline.BuildPlayer 之前执行
+- debug
+
+  开发版本，区分正式版
+
+- 用户名称
+
+  格式：user-< 名称 >
+
+- 渠道名称
+
+  格式：channel-< 渠道名称 >
+
+
+
+### 优先级
+
+配置文件将按优先级排序加载
+
+1. <empty>
+
+   空，默认
+
+
+2. platform
+
+   平台
+
+3. channel-
+
+   渠道
+
+
+3. debug
+
+   debug 标志
+
+
+4. user-
+
+   用户
+
+
+
+
+## 添加用户配置
+
+1. 配置文件名称格式
+
+   ```
+   user-<name>
+   ```
+
+   例如：user-a.build.xml
+
+2. 自动生成菜单代码
+
+   Assets/Plugins/gen/Editor/EditorOneBuildMenu.cs
+
+3. 查看菜单 `Build/User/< name >`
+
+
+
+
+
+## 版本号控制
+
+#### BuildSettings.IncrementVersion
+
+默认值 -1，Build时自动递增版本号，递增的索引，索引值从0开始
+
+例如：0.0.[1] ，该索引值为 2
+
+#### BuildSettings.IncrementVersionCode
+
+默认值 false，Build时自动递增 VersionCode
+
+#### 获取版本号值
+
+```
+{$Build:@@Version0}.{$Build:@@Version1}.{$Build:@@Version2}.{$Build:@@Version3}.{$Build:@@Version4}
+```
+
+
+
+### 获取Git标签版本号
+
+设置后会读取Git标签设置版本号文件
+
+比如Git标签格式：v版本号
+
+```
+v0.0.1
+```
+
+设置 `Build.GitTagVersion`, 正则表达式格式
+
+```
+v(?<result>\S+)
+```
+
+
+
+
+
+
+
+## 生成
+
+### 自动生成
+
+点击 `Build/Build` 菜单，自动运行构型
+
+生成过程中会多次中断和编译，确保编辑器窗口保持活动窗口
+
+
+
+### [命令行生成](doc/Command Build.md)
+
+
+
+
+
+### [安装](doc/install.md)
+
+
+
+
+
+## 生成管线
+
+管线顺序:
+
+- **BuildStarted** [unity.build.onebuild IBuildPipeline]
+
+  生成开始，如：生成版本号
+
+
+- **PreProcessBuildAttribute** [unity.build.onebuild]
+
+  生成之前
+
+- **IPreprocessBuildAssetBundle** [unity.assetbundles]
+
+  生成资源包之前
+
+- **IPostprocessBuildAssetBundle** [unity.assetbundles]
+
+  生成资源包之后
+
+- **BuildPipeline.BuildPlayer** [UnityEditor]
+
+  生成
+
+- **PostProcessBuildAttribute** [UnityEditor]
+
+  生成之后
   
-  执行顺序:
-  
-  ```
-  PreProcessBuildAttribute
-  BuildPipeline.BuildPlayer
-  PostProcessBuildAttribute
-  ```
-  
-  
+- **BuildEnded** [unity.build.onebuild IBuildPipeline]
+
+  生成结束
+
+
+
+## 生成对比
+
+空项目, Unity版本2019.1.10, Android, IL2CPP, Strip Engine Code, StripingLevel Heigh
+
+| Development Build | C++ Compiler Configuration | Size | 百分比差异 | 时间 |
+| ----------------- | -------------------------- | ---- | ---------- | ---- |
+| 否                | Release                    | 11.3 |            |      |
+| 否                | Debug                      | 18.4 | 63%        | 20%  |
+| 是                | Release                    | 25.3 | 38%        |      |
+| 是                | Debug                      | 33.4 | 32%        | 20%  |
+

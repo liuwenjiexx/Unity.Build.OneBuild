@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<config xmlns="urn:schema-unity-config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  <Type type="UnityEditor.Build.OneBuild.BuildSettings" name="Build">
+  </Type>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+    <SetScriptingDefineSymbolsForGroup combin=";" combinOptions="Distinct" combine=";" combineOptions="Distinct">
+      <BuildTargetGroup text="True">{$Build:@BuildTargetGroup}</BuildTargetGroup>
+      <defines combinValue="true" combineValue="True">CHANNEL_GOOGLE</defines>
+    </SetScriptingDefineSymbolsForGroup>
+  </Type>
+  <Type type="UnityEditor.PlayerSettings.Android" name="Android">
+  </Type>
+</config>

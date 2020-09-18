@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<config xmlns="urn:schema-unity-config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  <Type type="UnityEditor.Build.OneBuild.BuildSettings" name="Build">
+    <OutputDir>Build/Release/{$Build:@BuildTargetGroup}/{$PlayerSettings:@productName}</OutputDir>
+    <IncrementVersionCode>True</IncrementVersionCode>
+    <OutputFileName>
+    </OutputFileName>
+  </Type>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+  </Type>
+  <Type type="UnityEditor.PlayerSettings.iOS" name="IOS">
+    <TargetDevice>iPhoneAndiPad</TargetDevice>
+    <SdkVersion>DeviceSDK</SdkVersion>
+    <!--<AppleEnableAutomaticSigning>true</AppleEnableAutomaticSigning>
+    <AppleDeveloperTeamID>AppleDeveloperTeamID</AppleDeveloperTeamID>-->
+  </Type>
+</config>

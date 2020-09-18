@@ -7,7 +7,7 @@ namespace UnityEditor.Build.OneBuild
     public enum CombineOptions
     {
         None,
-        Clear = 0x2,
+        Replace = 0x2,
         Remove = 0x4,
         Distinct = 0x8,
     }

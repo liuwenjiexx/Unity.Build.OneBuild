@@ -1,6 +1,11 @@
 {
     "name": "Unity.Build.OneBuild.Editor",
-    "references": [],
+    "references": [
+        "GUID:fac978f3332e7f543bf512365a0ed1ee",
+        "GUID:e52d4e5afa790e6448eb99cfe5592759",
+        "GUID:38edba7c2a9152a42bcdb06d593885c9",
+        "GUID:212c8775a0e8f7a4f8a12836661b0e71"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
@@ -10,5 +15,6 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": []
 }

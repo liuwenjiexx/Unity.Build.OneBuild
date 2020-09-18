@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localization xmlns="urn:schema-localization">
+  <string key="Build Config">生成&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x10;&#x1F;&#x1F;&#x10;&#x10;配置</string>
+  <string key="key">键</string>
+  <string key="text">文本</string>
+  <string key="msg_del_type_content">删除类型 &lt;{0}&gt;</string>
+  <string key="Delete">删除</string>
+  <string key="msg_del_item_content">删除项 &lt;{0}&gt;</string>
+  <string key="Text">文本</string>
+  <string key="Key">键</string>
+  <string key="Combine">合并</string>
+  <string key="cancel">取消&#x1F;&#x10;</string>
+  <string key="ok">确定</string>
+  <string key="error">错误</string>
+  <string key="msg_file_exists">文件已存在 &lt;{0}&gt;</string>
+  <string key="msg_type_exists">类型已存在 &lt;{0}&gt;</string>
+  <string key="Load Settings">加载设置</string>
+  <string key="Project Settings">打开项目设置</string>
+  <string key="Build">生成</string>
+  <string key="Pre Build">预生成</string>
+  <string key="Alias">别名</string>
+  <string key="New Config Name">新建配置名称</string>
+  <string key="New Type Name">新类型名称</string>
+  <string key="Version Name">版本名称</string>
+  <string key="Major">主要</string>
+  <string key="Minor">次要</string>
+  <string key="Version">版本号</string>
+  <string key="Revision">修订</string>
+  <string key="Open Project Settings">打开项目设置</string>
+</localization>

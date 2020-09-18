@@ -3,7 +3,7 @@
 /*.csproj
 /*.sln
 /ProjectSettings/ProjectVersion.txt
-/Packages/manifest.json
+packages-lock.json
 !*.meta
 *.mdb
 *.dll.mdb.meta
@@ -13,4 +13,4 @@
 /logs/
 /build/
 *.unitypackage
-/ProjectSettings/
+/ProjectSettings/*.asset

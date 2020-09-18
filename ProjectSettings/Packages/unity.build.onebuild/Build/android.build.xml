@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<config xmlns="urn:schema-unity-config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  <Type type="UnityEditor.Build.OneBuild.BuildSettings" name="Build">
+    <OutputFileName>{$PlayerSettings:@productName}_v{$Build:@Version}_v{$Build:@VersionCode}_{$Build:@UtcTime,yyyyMMdd}.apk</OutputFileName>
+    <IncrementVersionCode>True</IncrementVersionCode>
+  </Type>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+  </Type>
+  <Type type="UnityEditor.PlayerSettings.Android" name="Android">
+    <!--<keystoreName>ProjectSettings/android.keystore</keystoreName>
+      <keystorePass>Password</keystorePass>
+      <keyaliasName>AliasName</keyaliasName>
+    <keyaliasPass>Password</keyaliasPass>-->
+    <targetArchitectures>ARMv7, ARM64</targetArchitectures>
+  </Type>
+  <Type type="UnityEngine.Build.OneBuild.FacebookSettings" name="Facebook">
+    <Enabled>True</Enabled>
+  </Type>
+</config>

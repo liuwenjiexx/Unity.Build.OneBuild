@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<config xmlns="urn:schema-unity-config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schema-unity-config ../Plugins/OneBuild/config.xsd">
+  <Type type="UnityEditor.Build.OneBuild.BuildSettings" name="Build">
+    <OutputDir>Build/{$Build:@Version}/{$PlayerSettings:@productName}_v{$Build:@Version}_{$Build:@UtcTime,yyyyMMdd}</OutputDir>
+    <OutputFilename>{$PlayerSettings:@productName}.exe</OutputFilename>
+  </Type>
+  <Type type="UnityEditor.PlayerSettings" name="PlayerSettings">
+    <SetScriptingBackend>
+      <BuildTargetGroup text="True">{$Build:@BuildTargetGroup}</BuildTargetGroup>
+      <ScriptingImplementation>Mono2x</ScriptingImplementation>
+    </SetScriptingBackend>
+  </Type>
+</config>
