@@ -1,22 +1,16 @@
 # Unity OneBuild 
 
 ## 预览
+ 
+![Release](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_release.PNG)
 
-**Release**
+ 
 
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_release.png)
+![Debug](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_debug.PNG)
 
+ 
 
-
-**Debug**
-
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_debug.png)
-
-
-
-**Android**
-
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_android.png)
+![Android](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_android.PNG)
 
 
 
