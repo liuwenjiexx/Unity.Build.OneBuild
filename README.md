@@ -1,22 +1,31 @@
-# Unity OneBuild 
+# Unity OneBuild
+
+
+
+## manifest.json
+
+```
+"system.stringformat": "https://github.com/liuwenjiexx/system.stringformat.git", 
+"unity.guiextensions": "https://github.com/liuwenjiexx/Unity.GuiExtensions.git",
+"unity.localization": "https://github.com/liuwenjiexx/Unity.Localization.git?path=/Assets/Plugins/Unity.Localization",
+"unity.build.onebuild": "https://github.com/liuwenjiexx/Unity.Build.OneBuild.git?path=/Assets/Plugins/Unity.Build.OneBuild",
+```
+
+
 
 ## 预览
 
 **Release**
 
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_release.png)
+![Release](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_release.PNG)
 
+ 
 
+![Debug](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_debug.PNG)
 
-**Debug**
+ 
 
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_debug.png)
-
-
-
-**Android**
-
-![Release](Assets/Plugins/Unity.Build.OneBuild/Doc/images/ui_android.png)
+![Android](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_android.PNG)
 
 
 
