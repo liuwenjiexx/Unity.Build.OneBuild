@@ -1,4 +1,6 @@
-# Unity OneBuild
+# Unity OneBuild 
+
+一键配置工具
 
 
 
@@ -14,8 +16,6 @@
 
 
 ## 预览
-
-**Release**
 
 ![Release](Assets/Plugins/Unity.Build.OneBuild/doc/images/ui_release.PNG)
 
@@ -33,4 +33,4 @@
 
 
 
-#### [文档说明](Assets/Plugins/Unity.Build.OneBuild/README.md)
+## [文档说明](Assets/Plugins/Unity.Build.OneBuild/README.md)
